@@ -1120,14 +1120,14 @@ class _DetailScreenState extends State<DetailScreen>
                           borderRadius: BorderRadius.circular(14),
                           gradient: LinearGradient(
                             colors: [
-                              Colors.red.withOpacity(0.1),
-                              Colors.red.withOpacity(0.05),
+                              Colors.red.withValues(alpha: 0.1),
+                              Colors.red.withValues(alpha: 0.05),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           border: Border.all(
-                            color: Colors.red.withOpacity(0.3),
+                            color: Colors.red.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
