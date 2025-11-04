@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1024264519953",
+    "project_id": "book-heaven-b10a0",
+    "storage_bucket": "book-heaven-b10a0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1024264519953:android:9ff612331801f9889c4cb0",
+        "android_client_info": {
+          "package_name": "com.example.heaven_book_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1024264519953-fhact2r3a5jb5f02v2vcgkdauvmu4i99.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.heaven_book_app",
+            "certificate_hash": "62bfa87d7174a1bc9beb4411582339fff97f6a93"
+          }
+        },
+        {
+          "client_id": "1024264519953-05mt45vcrtci26gd192gf98bbu42cb4c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATiAVndOXs-yZsf-UEWFdGuNbxTAA_UlU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1024264519953-05mt45vcrtci26gd192gf98bbu42cb4c.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1024264519953-njn38tn3i2ngv3i1q13if5p8a58pn8lv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.heavenBookApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
