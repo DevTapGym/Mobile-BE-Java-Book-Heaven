@@ -53,17 +53,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (authState is UserLoaded) {
       final user = authState.userData;
       nameController.text = user.name;
-      selectedGender = user.gender;
+      selectedGender = user.customer?.gender;
       phoneController.text = user.phone ?? '';
       imageUrl = user.avatarUrl;
 
-      if (user.dateOfBirth != null) {
+      if (user.customer?.birthday != null) {
         dateOfBirthController.text = DateFormat(
           'dd-MM-yyyy',
-        ).format(user.dateOfBirth!);
+        ).format(user.customer!.birthday!);
         dateOfBirthForServer = DateFormat(
           'yyyy-MM-dd',
-        ).format(user.dateOfBirth!);
+        ).format(user.customer!.birthday!);
       }
     } else {
       context.read<UserBloc>().add(LoadUserInfo());
@@ -485,27 +485,39 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     padding: const EdgeInsets.only(top: 16.0, bottom: 16.0),
                     child: ElevatedButton(
                       onPressed: () {
-                        debugPrint(
-                          'Data to update: ${nameController.text}, '
-                          '$dateOfBirthForServer, '
-                          '${phoneController.text}, '
-                          '$selectedGender',
-                        );
-                        // Cập nhật thông tin user
-                        context.read<UserBloc>().add(
-                          UpdateUser(
-                            name: nameController.text,
-                            dateOfBirth: dateOfBirthForServer,
-                            phone: phoneController.text,
-                            gender: selectedGender ?? '',
-                          ),
-                        );
+                        final authState = context.read<UserBloc>().state;
+                        if (authState is UserLoaded) {
+                          final user = authState.userData;
+                          debugPrint('Data User: ${user.id}');
+                          // Cập nhật thông tin user
+                          context.read<UserBloc>().add(
+                            UpdateUser(
+                              id: user.id,
+                              customerId: user.customer?.id ?? 0,
+                              name: nameController.text,
+                              dateOfBirth: dateOfBirthForServer,
+                              phone: phoneController.text,
+                              gender: selectedGender ?? '',
+                              avatar: imageUrl ?? '',
+                              email: user.email,
+                            ),
+                          );
+                        }
 
                         // Nếu có ảnh mới được chọn, cập nhật avatar
                         if (selectedImageFile != null) {
-                          context.read<UserBloc>().add(
-                            ChangeAvatar(avatarPath: selectedImageFile!),
-                          );
+                          final authState = context.read<UserBloc>().state;
+
+                          if (authState is UserLoaded) {
+                            final user = authState.userData;
+
+                            context.read<UserBloc>().add(
+                              ChangeAvatar(
+                                id: user.id,
+                                avatarPath: selectedImageFile!,
+                              ),
+                            );
+                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(

@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:heaven_book_app/bloc/user/user_event.dart';
 import 'package:heaven_book_app/bloc/user/user_state.dart';
 import 'package:heaven_book_app/services/auth_service.dart';
@@ -21,6 +22,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     emit(UserLoading());
     try {
       final userInfo = await authService.getCurrentUser();
+      debugPrint('Loaded user info: $userInfo');
       emit(UserLoaded(userData: userInfo));
     } catch (e) {
       emit(UserError(e.toString()));
@@ -31,13 +33,22 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     ChangePassword event,
     Emitter<UserState> emit,
   ) async {
+    final currentState = state;
+
     emit(UserLoading());
     try {
+      String? email;
+      if (currentState is UserLoaded) {
+        email = currentState.userData.email;
+      }
+      debugPrint('User email for password change: $email');
+
       await authService.changePassword(
         event.currentPassword,
         event.newPassword,
-        event.newPasswordConfirmation,
+        email ?? '', // fallback nếu null
       );
+
       emit(
         UserLoaded(
           userData: await authService.getCurrentUser(),
@@ -52,14 +63,24 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   Future<void> _onUpdateUser(UpdateUser event, Emitter<UserState> emit) async {
     emit(UserLoading());
     try {
-      final result = await authService.updateInfoUser(
+      final resultUpdateUser = await authService.updateInfoUser(
+        event.id,
+        name: event.name,
+        phone: event.phone,
+        avatar: event.avatar,
+        email: event.email,
+      );
+
+      final resultUpdateCustomer = await authService.updateCustomer(
+        event.customerId,
         event.name,
-        event.dateOfBirth,
         event.phone,
+        event.email,
+        event.dateOfBirth,
         event.gender,
       );
 
-      if (result) {
+      if (resultUpdateUser && resultUpdateCustomer) {
         emit(
           UserLoaded(
             userData: await authService.getCurrentUser(),
@@ -81,12 +102,27 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     emit(UserLoading());
     try {
       final updatedUser = await authService.uploadAvatar(event.avatarPath);
-      emit(
-        UserLoaded(
-          userData: updatedUser,
-          message: "Avatar changed successfully",
-        ),
+
+      if (updatedUser.isEmpty) {
+        emit(UserError("Failed to upload avatar"));
+        return;
+      }
+
+      final resultUpdateUser = await authService.updateInfoUser(
+        event.id,
+        avatar: updatedUser,
       );
+
+      if (resultUpdateUser) {
+        emit(
+          UserLoaded(
+            userData: await authService.getCurrentUser(),
+            message: "Avatar updated successfully",
+          ),
+        );
+      } else {
+        emit(UserError("Failed to update user information"));
+      }
     } catch (e) {
       emit(UserError(e.toString()));
     }
