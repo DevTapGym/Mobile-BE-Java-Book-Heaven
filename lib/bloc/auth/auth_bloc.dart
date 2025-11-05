@@ -17,11 +17,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         final result = await authService.loginWithGoogle();
-
         final token = result['token'] as String;
-        final isActive = result['isActive'] as bool;
 
-        emit(AuthSuccess(token: token, isActive: isActive));
+        emit(AuthSuccess(token: token));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -44,7 +42,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           name: event.name,
           email: event.email,
           password: event.password,
-          passwordConfirmation: event.passwordConfirmation,
+          phone: event.phone,
         );
         final userData = result['user'] as Map<String, dynamic>;
         final message = result['message'] as String;
@@ -59,11 +57,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         final result = await authService.login(event.username, event.password);
+        final token = result;
 
-        final token = result['token'] as String;
-        final isActive = result['isActive'] as bool;
-
-        emit(AuthSuccess(token: token, isActive: isActive));
+        emit(AuthSuccess(token: token));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -81,9 +77,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             final result = await authService.refreshToken();
 
             final token = result['token'] as String;
-            final isActive = result['isActive'] as bool;
 
-            emit(AuthSuccess(token: token, isActive: isActive));
+            emit(AuthSuccess(token: token));
             return;
           }
           emit(AuthFailure('Cần đăng nhập lại'));
@@ -95,7 +90,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             return;
           }
 
-          emit(AuthSuccess(token: accessToken, isActive: isActive == 'true'));
+          emit(AuthSuccess(token: accessToken));
         }
       } catch (e) {
         emit(AuthLoggedOut());
@@ -108,8 +103,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final token = await secureStorage.read(key: 'access_token');
 
         if (isActiveString != null && token != null) {
-          final isActive = isActiveString == 'true';
-          emit(AuthSuccess(token: token, isActive: isActive));
+          emit(AuthSuccess(token: token));
         } else {
           emit(AuthFailure('Không thể xác thực người dùng'));
         }
@@ -139,7 +133,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         final token = await secureStorage.read(key: 'access_token');
 
-        emit(AuthSuccess(token: token!, isActive: true));
+        emit(AuthSuccess(token: token!));
       } catch (e) {
         emit(AuthFailure('Mã kích hoạt không hợp lệ: ${e.toString()}'));
       }

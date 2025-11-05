@@ -264,23 +264,22 @@ class AuthService {
   }
 
   // ==================== LOGIN ====================
-  Future<Map<String, dynamic>> login(String email, String password) async {
+  Future<String> login(String username, String password) async {
     try {
       final response = await apiClient.publicDio.post(
         '/auth/login',
-        data: {"email": email, "password": password},
+        data: {"username": username, "password": password},
       );
 
       if (response.statusCode == 200 && response.data['data'] != null) {
         final data = response.data['data'];
+        final accessToken = data['access_token'];
 
-        // Lưu access token
-        await _secureStorage.write(
-          key: 'access_token',
-          value: data['access_token'],
-        );
+        if (accessToken == null || accessToken.isEmpty) {
+          throw Exception('Không tìm thấy access_token trong phản hồi');
+        }
+        await _secureStorage.write(key: 'access_token', value: accessToken);
 
-        // Lưu refresh token từ header (Set-Cookie)
         final setCookieHeader = response.headers['set-cookie'];
         if (setCookieHeader != null && setCookieHeader.isNotEmpty) {
           final refreshCookie = setCookieHeader
@@ -295,26 +294,10 @@ class AuthService {
               key: 'refresh_token',
               value: refreshCookie.value,
             );
-            debugPrint('Refresh token đã lưu trong SecureStorage');
-          } else {
-            throw Exception('Không tìm thấy refresh_token trong header');
           }
         }
 
-        // Lưu trạng thái user
-        final userData = data['account'] ?? {};
-        final isActiveValue = userData['is_active'] ?? false;
-        await _secureStorage.write(
-          key: 'is_active',
-          value: isActiveValue.toString(),
-        );
-
-        final isActive = userData['is_active'] == true;
-        return {
-          'token': data['access_token'],
-          'user': userData,
-          'isActive': isActive,
-        };
+        return accessToken;
       } else {
         throw Exception(response.data['message'] ?? 'Đăng nhập thất bại');
       }
@@ -372,12 +355,7 @@ class AuthService {
           }
         }
 
-        return {
-          'token': newAccessToken,
-          'user': data['user'] ?? {},
-          'isActive': (data['user']?['is_active'] ?? false) == true,
-          'success': true,
-        };
+        return {'token': newAccessToken, 'success': true};
       } else {
         throw Exception('Làm mới token thất bại');
       }
@@ -440,7 +418,7 @@ class AuthService {
     required String name,
     required String email,
     required String password,
-    required String passwordConfirmation,
+    required String phone,
   }) async {
     try {
       final response = await apiClient.publicDio.post(
@@ -449,20 +427,18 @@ class AuthService {
           "username": name,
           "email": email,
           "password": password,
-          "password_confirmation": passwordConfirmation,
+          "phone": phone,
         },
       );
 
       if (response.statusCode == 201) {
         final data = response.data['data'];
-        final isActive = data['is_active'] ?? false;
 
         return {
           'success': true,
           'status': response.data['status'],
           'message': response.data['message'] ?? 'Đăng ký thành công',
           'user': data,
-          'isActive': isActive,
         };
       } else {
         throw Exception(response.data['message'] ?? 'Đăng ký thất bại');

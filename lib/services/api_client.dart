@@ -10,14 +10,14 @@ class ApiClient {
   ApiClient(FlutterSecureStorage secureStorage, AuthService authService)
     : publicDio = Dio(
         BaseOptions(
-          baseUrl: 'http://10.0.2.2:8000/api/v1',
+          baseUrl: 'http://10.0.2.2:8080/api/v1',
           headers: {'Content-Type': 'application/json'},
         ),
       ),
 
       privateDio = Dio(
         BaseOptions(
-          baseUrl: 'http://10.0.2.2:8000/api/v1',
+          baseUrl: 'http://10.0.2.2:8080/api/v1',
           headers: {'Content-Type': 'application/json'},
         ),
       ) {

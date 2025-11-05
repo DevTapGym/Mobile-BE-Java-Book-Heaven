@@ -41,13 +41,13 @@ class _InitScreenState extends State<InitScreen> {
       debugPrint('🔍 [InitScreen] Is active: $isActive');
 
       // Case 1: Không có token hoặc chưa active -> Login
-      if (accessToken == null || accessToken.isEmpty || isActive != 'true') {
-        debugPrint('❌ [InitScreen] Không có token hoặc chưa active → Login');
+      if (accessToken == null || accessToken.isEmpty) {
+        debugPrint('❌ [InitScreen] Không có token → Login');
         _navigateToLogin();
         return;
       }
 
-      // Case 2: Có token và active = '1' -> Kiểm tra expired
+      // Case 2: Có token  -> Kiểm tra expired
       final isExpired = _isTokenExpired(accessToken);
       debugPrint('🔍 [InitScreen] Token expired: $isExpired');
 

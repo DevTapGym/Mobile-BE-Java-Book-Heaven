@@ -71,21 +71,16 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           } else if (state is AuthSuccess) {
             Navigator.pop(context);
-
-            if (state.isActive == true) {
-              Navigator.pushReplacementNamed(context, '/main');
-            } else {
-              if (mounted) {
-                Navigator.pushNamed(context, '/active');
-              }
-            }
-          }
-          // 4.4. Nếu lỗi
-          else if (state is AuthFailure) {
-            Navigator.pop(context); // Đóng loading
+            Navigator.pushReplacementNamed(context, '/main');
+          } else if (state is AuthFailure) {
+            Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
+                content: Text(
+                  state.message == 'Exception: Bad credentials'
+                      ? 'Đăng nhập thất bại: Sai email hoặc mật khẩu'
+                      : 'Đăng nhập thất bại: ${state.message}',
+                ),
                 backgroundColor: Colors.red,
                 duration: const Duration(seconds: 3),
               ),
