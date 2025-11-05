@@ -174,7 +174,7 @@ class OrderService {
 
   Future<List<Order>> loadAllOrder() async {
     try {
-      final response = await apiClient.privateDio.get('/order/user');
+      final response = await apiClient.privateDio.get('/order');
       final data = response.data['data'];
       final resultList = data['result'] as List;
 

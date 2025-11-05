@@ -387,7 +387,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 backgroundImage:
                                     user.avatarUrl != null
                                         ? Image.network(
-                                          'http://10.0.2.2:8000/storage/Avatar${user.avatarUrl}',
+                                          'http://10.0.2.2:8080/storage/Avatar/${user.avatarUrl}',
                                           errorBuilder: (
                                             context,
                                             error,

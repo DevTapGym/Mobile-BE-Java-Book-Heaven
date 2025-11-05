@@ -36,7 +36,7 @@ class Promotion {
       id: json['id'],
       code: json['code'] ?? '',
       name: json['name'] ?? '',
-      status: json['status'] ?? '',
+      status: json['status'].toString() == '1',
       promotionType: json['promotionType'] ?? '',
       promotionValue:
           json['promotionValue'] != null

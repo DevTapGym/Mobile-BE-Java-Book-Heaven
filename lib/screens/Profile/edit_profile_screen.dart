@@ -130,7 +130,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     // Sau đó hiển thị ảnh từ server
     if (imageUrl != null && imageUrl!.isNotEmpty) {
-      return NetworkImage('http://10.0.2.2:8000$imageUrl');
+      return NetworkImage('http://10.0.2.2:8080/storage/Avatar/$imageUrl');
     }
 
     // Default avatar nếu không có ảnh
@@ -514,6 +514,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             context.read<UserBloc>().add(
                               ChangeAvatar(
                                 id: user.id,
+                                name: nameController.text,
+                                phone: phoneController.text,
+                                email: user.email,
                                 avatarPath: selectedImageFile!,
                               ),
                             );

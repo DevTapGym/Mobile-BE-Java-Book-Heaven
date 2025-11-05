@@ -110,6 +110,9 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
       final resultUpdateUser = await authService.updateInfoUser(
         event.id,
+        name: event.name,
+        phone: event.phone,
+        email: event.email,
         avatar: updatedUser,
       );
 

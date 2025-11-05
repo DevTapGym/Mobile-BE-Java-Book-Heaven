@@ -11,9 +11,18 @@ class LoadUserInfo extends UserEvent {}
 
 class ChangeAvatar extends UserEvent {
   final int id;
+  final String name;
+  final String phone;
+  final String email;
   final File avatarPath;
 
-  ChangeAvatar({required this.id, required this.avatarPath});
+  ChangeAvatar({
+    required this.id,
+    required this.name,
+    required this.phone,
+    required this.email,
+    required this.avatarPath,
+  });
 
   @override
   List<Object?> get props => [id, avatarPath];

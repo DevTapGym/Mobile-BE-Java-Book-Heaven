@@ -1570,6 +1570,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if (state is CategoryLoading) {
       return const Center(child: CircularProgressIndicator());
     } else if (state is CategoryLoaded) {
+      if (state.categories.isEmpty) {
+        return const Center(
+          child: Text(
+            'Không có danh mục nào.',
+            style: TextStyle(color: AppColors.text),
+          ),
+        );
+      }
       return ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: state.categories.length,

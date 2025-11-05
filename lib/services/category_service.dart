@@ -7,23 +7,17 @@ import 'package:heaven_book_app/services/auth_service.dart';
 class CategoryService {
   final apiClient = ApiClient(FlutterSecureStorage(), AuthService());
 
-  Future<List<Category>> getAllCategories({
-    int page = 1,
-    int pageSize = 10,
-  }) async {
+  Future<List<Category>> getAllCategories() async {
     try {
-      final response = await apiClient.publicDio.get(
-        '/categories/page',
-        queryParameters: {'page': page, 'pageSize': pageSize},
-      );
+      final response = await apiClient.publicDio.get('/categories');
 
       if (response.statusCode == 200) {
         final data = response.data;
 
         if (data is Map<String, dynamic> &&
             data['data'] != null &&
-            data['data']['result'] is List) {
-          final List<dynamic> list = data['data']['result'];
+            data['data'] is List) {
+          final List<dynamic> list = data['data'];
           return list
               .map((e) => Category.fromJson(Map<String, dynamic>.from(e)))
               .toList();

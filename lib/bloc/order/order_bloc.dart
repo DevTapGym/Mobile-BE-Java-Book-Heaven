@@ -7,7 +7,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   final OrderService _orderService;
 
   OrderBloc(this._orderService) : super(OrderInitial()) {
-    on<LoadAllOrders>(_onLoadCategories);
+    on<LoadAllOrders>(_onLoadAllOrders);
     on<LoadDetailOrder>(_onLoadDetailOrder);
     on<PlaceOrder>(_onPlaceOrder);
     on<CreateOrder>(_onCreateOrder);
@@ -117,7 +117,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     }
   }
 
-  Future<void> _onLoadCategories(
+  Future<void> _onLoadAllOrders(
     LoadAllOrders event,
     Emitter<OrderState> emit,
   ) async {
