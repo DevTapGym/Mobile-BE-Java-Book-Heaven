@@ -34,13 +34,11 @@ class _InitScreenState extends State<InitScreen> {
       }
 
       final accessToken = await _secureStorage.read(key: 'access_token');
-      final isActive = await _secureStorage.read(key: 'is_active');
 
       debugPrint('🔍 [InitScreen] Kiểm tra auto login...');
       debugPrint('🔍 [InitScreen] Access token exists: ${accessToken != null}');
-      debugPrint('🔍 [InitScreen] Is active: $isActive');
 
-      // Case 1: Không có token hoặc chưa active -> Login
+      // Case 1: Không có token -> Login
       if (accessToken == null || accessToken.isEmpty) {
         debugPrint('❌ [InitScreen] Không có token → Login');
         _navigateToLogin();

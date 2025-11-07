@@ -16,26 +16,12 @@ class Cart {
   factory Cart.fromJson(Map<String, dynamic> json) {
     return Cart(
       id: json['id'],
-      totalItems: json['total_items'],
-      totalPrice: double.parse(json['total_price'].toString()),
+      totalItems: json['count'],
+      totalPrice: double.tryParse(json['sumPrice']?.toString() ?? '0') ?? 0.0,
       items:
-          (json['items'] as List)
+          (json['cartItems'] as List<dynamic>)
               .map((item) => CartItem.fromJson(item))
               .toList(),
-    );
-  }
-
-  Cart copyWith({
-    int? id,
-    int? totalItems,
-    double? totalPrice,
-    List<CartItem>? items,
-  }) {
-    return Cart(
-      id: id ?? this.id,
-      totalItems: totalItems ?? this.totalItems,
-      totalPrice: totalPrice ?? this.totalPrice,
-      items: items ?? this.items,
     );
   }
 }

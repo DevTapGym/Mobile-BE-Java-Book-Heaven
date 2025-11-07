@@ -17,16 +17,22 @@ class BookBloc extends Bloc<BookEvent, BookState> {
   Future<void> _onLoadBooks(LoadBooks event, Emitter<BookState> emit) async {
     emit(BookLoading());
     try {
-      final popularBooks = await bookService.getPopularBooks();
-      final saleOffBooks = await bookService.getSaleOffBooks();
-      final bestSellingBooks = await bookService.getBestSellingBooksInYear();
-      final bannerBooks = await bookService.getBannerBooks();
-      final randomBooks = await bookService.getRandomBooks();
+      // final popularBooks = await bookService.getPopularBooks();
+      // final saleOffBooks = await bookService.getSaleOffBooks();
+      // final bestSellingBooks = await bookService.getBestSellingBooksInYear();
+      // final bannerBooks = await bookService.getBannerBooks();
+      // final randomBooks = await bookService.getRandomBooks();
+
+      final popularBooks = await bookService.getAllBooks();
+      final saleOffBooks = await bookService.getAllBooks();
+      final bestSellingBooks = await bookService.getAllBooks();
+      final bannerBooks = await bookService.getAllBooks();
+      final randomBooks = await bookService.getAllBooks();
       emit(
         BookLoaded(
           popularBooks: popularBooks,
           saleOffBooks: saleOffBooks,
-          bestSellingBooks: bestSellingBooks,
+          bestSellingBooks: bestSellingBooks.take(3).toList(),
           bannerBooks: bannerBooks,
           randomBooks: randomBooks,
         ),

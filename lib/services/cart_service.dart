@@ -9,17 +9,20 @@ class CartService {
 
   CartService(this.apiClient);
 
-  Future<Cart> getMyCart() async {
+  Future<Cart> getMyCart(int customerID) async {
     try {
-      final response = await apiClient.privateDio.get('/cart/my-cart');
+      final response = await apiClient.privateDio.get(
+        '/cart/by-customer/$customerID',
+      );
 
       if (response.statusCode == 200) {
         final body = response.data;
 
         if (body is Map<String, dynamic> && body['data'] != null) {
           final cartData = Map<String, dynamic>.from(body['data']);
-          _cartId = Cart.fromJson(cartData).id;
-          return Cart.fromJson(cartData);
+          final cart = Cart.fromJson(cartData);
+          _cartId = cart.id;
+          return cart;
         } else {
           throw Exception('Invalid API response format');
         }
@@ -81,7 +84,7 @@ class CartService {
     try {
       // Đảm bảo có cartId trước khi add
       if (_cartId == null) {
-        await getMyCart(); // Lấy cart để có _cartId
+        await getMyCart(1); // Lấy cart để có _cartId
       }
 
       final response = await apiClient.privateDio.post(

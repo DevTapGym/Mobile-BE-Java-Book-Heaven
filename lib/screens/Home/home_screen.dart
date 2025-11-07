@@ -871,7 +871,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             child: Center(
                               child: Image.network(
-                                'http://10.0.2.2:8000${book.thumbnail}',
+                                'http://10.0.2.2:8080/storage/Product/${book.thumbnail}',
                                 width: 120,
                                 height: 160,
                                 fit: BoxFit.cover,
@@ -1244,7 +1244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child:
                           book.thumbnail.isNotEmpty
                               ? Image.network(
-                                'http://10.0.2.2:8000${book.thumbnail}',
+                                'http://10.0.2.2:8080/storage/Product/${book.thumbnail}',
                                 width: 80,
                                 height: 120,
                                 fit: BoxFit.cover,

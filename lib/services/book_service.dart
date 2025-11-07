@@ -1,5 +1,7 @@
 import 'package:heaven_book_app/model/book.dart';
 import 'package:heaven_book_app/services/api_client.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 
 class BookService {
   final ApiClient apiClient;
@@ -8,25 +10,51 @@ class BookService {
 
   Future<List<Book>> getAllBooks() async {
     try {
-      final response = await apiClient.publicDio.get('/book/?size=20&page=1');
+      final response = await apiClient.privateDio.get('/productsNoPagination');
 
       if (response.statusCode == 200) {
         final data = response.data;
-        if (data is Map<String, dynamic> &&
-            data['data'] is Map<String, dynamic> &&
-            data['data']['result'] is List) {
-          final List<dynamic> list = data['data']['result'];
-          return list
-              .map((e) => Book.fromJson(Map<String, dynamic>.from(e)))
-              .toList();
+
+        // Kiểm tra nhiều cấu trúc response khác nhau
+        List<dynamic> bookList;
+
+        if (data is Map<String, dynamic>) {
+          if (data['data'] is Map<String, dynamic> &&
+              data['data']['result'] is List) {
+            bookList = data['data']['result'];
+          } else if (data['data'] is List) {
+            bookList = data['data'];
+          } else {
+            throw Exception('Invalid API response format');
+          }
+        } else if (data is List) {
+          bookList = data;
         } else {
           throw Exception('Invalid API response format');
         }
+
+        return bookList
+            .map((e) => Book.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
       } else {
         throw Exception(
           'Failed to load books (status: ${response.statusCode})',
         );
       }
+    } on DioException catch (dioError) {
+      debugPrint('❌ DioException khi tạo đơn hàng: ${dioError.message}');
+
+      if (dioError.response != null) {
+        debugPrint('Status code: ${dioError.response?.statusCode}');
+        debugPrint('Data: ${dioError.response?.data}');
+        debugPrint('Headers: ${dioError.response?.headers}');
+      } else {
+        debugPrint('Message: ${dioError.message}');
+      }
+      final msg =
+          dioError.response?.data?['message'] ?? 'Lỗi kết nối đến server';
+      debugPrint('Chi tiết lỗi: $msg');
+      throw msg; // 👉 chỉ ném chuỗi lỗi, không bọc trong Exception
     } catch (e) {
       throw Exception('Error loading books: $e');
     }

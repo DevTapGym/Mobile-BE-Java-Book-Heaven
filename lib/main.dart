@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:heaven_book_app/bloc/user/user_event.dart';
 import 'firebase_options.dart';
 import 'package:heaven_book_app/bloc/address/address_bloc.dart';
 import 'package:heaven_book_app/bloc/address/address_event.dart';
@@ -10,7 +11,6 @@ import 'package:heaven_book_app/bloc/auth/auth_state.dart';
 import 'package:heaven_book_app/bloc/book/book_bloc.dart';
 import 'package:heaven_book_app/bloc/book/book_event.dart';
 import 'package:heaven_book_app/bloc/cart/cart_bloc.dart';
-import 'package:heaven_book_app/bloc/cart/cart_event.dart';
 import 'package:heaven_book_app/bloc/cart/cart_state.dart';
 import 'package:heaven_book_app/bloc/order/order_bloc.dart';
 import 'package:heaven_book_app/bloc/payment/payment_bloc.dart';
@@ -70,7 +70,9 @@ Future<void> main() async {
           create: (_) => BookBloc(bookRepository)..add(LoadBooks()),
         ),
         BlocProvider<AuthBloc>(create: (_) => AuthBloc(authService)),
-        BlocProvider<UserBloc>(create: (_) => UserBloc(authService)),
+        BlocProvider<UserBloc>(
+          create: (_) => UserBloc(authService)..add(LoadUserInfo()),
+        ),
         BlocProvider<CartBloc>(
           create: (_) => CartBloc(cartRepository, bookRepository),
         ),
@@ -177,7 +179,6 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<CartBloc>().add(LoadCart());
   }
 
   @override
