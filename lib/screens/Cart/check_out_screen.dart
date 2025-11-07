@@ -1,25 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:heaven_book_app/bloc/address/address_bloc.dart';
-import 'package:heaven_book_app/bloc/address/address_state.dart';
 import 'package:heaven_book_app/bloc/cart/cart_bloc.dart';
 import 'package:heaven_book_app/bloc/cart/cart_state.dart';
 import 'package:heaven_book_app/bloc/order/order_bloc.dart';
 import 'package:heaven_book_app/bloc/order/order_event.dart';
 import 'package:heaven_book_app/bloc/order/order_state.dart';
-import 'package:heaven_book_app/bloc/payment/payment_bloc.dart';
-import 'package:heaven_book_app/bloc/payment/payment_event.dart';
-import 'package:heaven_book_app/bloc/payment/payment_state.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_bloc.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_event.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_state.dart';
 import 'package:heaven_book_app/model/promotion.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
 import 'package:heaven_book_app/themes/format_price.dart';
-import 'package:heaven_book_app/widgets/address_card_widget.dart';
 import 'package:heaven_book_app/widgets/appbar_custom_widget.dart';
 import 'package:heaven_book_app/widgets/custom_circle_checkbox.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart';
+
+// Hardcoded Payment Method Model
+class PaymentMethod {
+  final int id;
+  final String name;
+  final IconData icon;
+  final bool isActive;
+
+  PaymentMethod({
+    required this.id,
+    required this.name,
+    required this.icon,
+    this.isActive = true,
+  });
+}
 
 class CheckOutScreen extends StatefulWidget {
   const CheckOutScreen({super.key});
@@ -35,11 +46,92 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   bool showAllPromotions = false;
   final TextEditingController _noteController = TextEditingController();
 
+  // Address form fields
+  final TextEditingController _recipientNameController =
+      TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _addressDisplayController =
+      TextEditingController();
+  final TextEditingController _subAddressController = TextEditingController();
+
+  List<dynamic> _provinces = [];
+  List<dynamic> _districts = [];
+  // ignore: unused_field
+  List<dynamic> _wards = [];
+  String? _selectedProvince;
+  String? _selectedDistrict;
+  String? _selectedWard;
+
+  // Hardcoded payment methods
+  final List<PaymentMethod> _paymentMethods = [
+    PaymentMethod(
+      id: 1,
+      name: 'Thanh toán khi nhận hàng (COD)',
+      icon: Icons.money,
+      isActive: true,
+    ),
+    PaymentMethod(
+      id: 2,
+      name: 'Chuyển khoản ngân hàng',
+      icon: Icons.account_balance,
+      isActive: false,
+    ),
+    PaymentMethod(
+      id: 3,
+      name: 'Ví điện tử (MoMo, ZaloPay)',
+      icon: Icons.wallet,
+      isActive: false,
+    ),
+    PaymentMethod(
+      id: 4,
+      name: 'Thẻ tín dụng/Ghi nợ',
+      icon: Icons.credit_card,
+      isActive: false,
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
-    context.read<PaymentBloc>().add(LoadPaymentMethods());
     context.read<PromotionBloc>().add(LoadPromotions());
+    _loadAddressData();
+  }
+
+  @override
+  void dispose() {
+    _recipientNameController.dispose();
+    _phoneController.dispose();
+    _addressDisplayController.dispose();
+    _subAddressController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadAddressData() async {
+    final String response = await rootBundle.loadString(
+      'assets/data/vietnamAddress.json',
+    );
+    final data = await json.decode(response);
+    setState(() {
+      _provinces = data;
+    });
+  }
+
+  bool _isAddressValid() {
+    return _recipientNameController.text.trim().isNotEmpty &&
+        _phoneController.text.trim().isNotEmpty &&
+        RegExp(r'^0[0-9]{9,10}$').hasMatch(_phoneController.text.trim()) &&
+        _selectedProvince != null &&
+        _selectedDistrict != null &&
+        _selectedWard != null;
+  }
+
+  String _getFullAddress() {
+    if (_subAddressController.text.trim().isEmpty) {
+      return '$_selectedWard, $_selectedDistrict, $_selectedProvince';
+    } else {
+      return '${_subAddressController.text.trim()} - $_selectedWard, $_selectedDistrict, $_selectedProvince';
+    }
   }
 
   Widget _buildSummaryRow(String label, String value, {bool isBold = false}) {
@@ -78,101 +170,483 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   }
 
   Widget _buildAddressSection() {
-    return BlocBuilder<AddressBloc, AddressState>(
-      builder: (context, state) {
-        if (state is AddressLoading) {
-          return Center(child: CircularProgressIndicator());
-        } else if (state is AddressLoaded) {
-          final address = state.addresses;
-          if (address.isEmpty) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 40.0,
+    return Container(
+      margin: EdgeInsets.only(top: 10.0, left: 18.0, right: 18.0),
+      padding: EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16.0),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            spreadRadius: 2,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.location_on,
+                  color: AppColors.primaryDark,
+                  size: 28,
+                ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.location_off_outlined,
-                    size: 80,
-                    color: Colors.grey.withValues(alpha: 0.6),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    //'No shipping address found',
-                    'Chưa tìm thấy địa chỉ giao hàng',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    //'Please add a shipping address in your profile to continue.',
-                    'Vui lòng thêm địa chỉ giao hàng trong hồ sơ để tiếp tục.',
-                    style: TextStyle(fontSize: 15, color: Colors.black54),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/shipping-address');
+              SizedBox(width: 12.0),
+              Text(
+                'Thông tin giao hàng',
+                style: TextStyle(
+                  fontSize: 19.0,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20.0),
+
+          // Recipient Name
+          TextField(
+            controller: _recipientNameController,
+            style: TextStyle(fontSize: 15, color: AppColors.text),
+            decoration: InputDecoration(
+              labelText: 'Tên người nhận',
+              labelStyle: TextStyle(
+                color: AppColors.primaryDark,
+                fontWeight: FontWeight.w500,
+              ),
+              hintText: 'Nhập tên người nhận',
+              hintStyle: TextStyle(color: Colors.grey[400]),
+              prefixIcon: Icon(Icons.person_outline, color: AppColors.primary),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide(color: AppColors.primary, width: 2),
+              ),
+              filled: true,
+              fillColor: AppColors.card.withValues(alpha: 0.3),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
+          SizedBox(height: 16.0),
+
+          // Phone
+          TextField(
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            style: TextStyle(fontSize: 15, color: AppColors.text),
+            decoration: InputDecoration(
+              labelText: 'Số điện thoại',
+              labelStyle: TextStyle(
+                color: AppColors.primaryDark,
+                fontWeight: FontWeight.w500,
+              ),
+              hintText: 'Nhập số điện thoại',
+              hintStyle: TextStyle(color: Colors.grey[400]),
+              prefixIcon: Icon(Icons.phone_outlined, color: AppColors.primary),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide(color: AppColors.primary, width: 2),
+              ),
+              filled: true,
+              fillColor: AppColors.card.withValues(alpha: 0.3),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
+          SizedBox(height: 16.0),
+
+          // Location Picker
+          GestureDetector(
+            onTap: () async {
+              String? province = _selectedProvince;
+              String? district = _selectedDistrict;
+              String? ward = _selectedWard;
+              await showDialog(
+                context: context,
+                builder: (context) {
+                  List<dynamic> tempDistricts =
+                      province != null
+                          ? _provinces.firstWhere(
+                            (p) => p['Name'] == province,
+                          )['Districts']
+                          : [];
+                  List<dynamic> tempWards =
+                      district != null
+                          ? tempDistricts.firstWhere(
+                            (d) => d['Name'] == district,
+                          )['Wards']
+                          : [];
+                  String? tempProvince = province;
+                  String? tempDistrict = district;
+                  String? tempWard = ward;
+                  return StatefulBuilder(
+                    builder: (context, setStateDialog) {
+                      return AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        backgroundColor: Colors.white,
+                        title: Row(
+                          children: [
+                            Icon(
+                              Icons.location_city,
+                              color: AppColors.primaryDark,
+                              size: 26,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Chọn địa chỉ',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                        content: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              DropdownButtonFormField<String>(
+                                dropdownColor: Colors.white,
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Tỉnh/Thành phố',
+                                  labelStyle: TextStyle(
+                                    color: AppColors.primaryDark,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: AppColors.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: AppColors.card.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                ),
+                                initialValue: tempProvince,
+                                items:
+                                    _provinces.map<DropdownMenuItem<String>>((
+                                      province,
+                                    ) {
+                                      return DropdownMenuItem<String>(
+                                        value: province['Name'],
+                                        child: Text(province['Name']),
+                                      );
+                                    }).toList(),
+                                onChanged: (value) {
+                                  setStateDialog(() {
+                                    tempProvince = value;
+                                    tempDistrict = null;
+                                    tempWard = null;
+                                    tempDistricts =
+                                        _provinces.firstWhere(
+                                          (p) => p['Name'] == value,
+                                        )['Districts'];
+                                    tempWards = [];
+                                  });
+                                },
+                              ),
+                              SizedBox(height: 16.0),
+                              DropdownButtonFormField<String>(
+                                dropdownColor: Colors.white,
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Quận/Huyện',
+                                  labelStyle: TextStyle(
+                                    color: AppColors.primaryDark,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: AppColors.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: AppColors.card.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                ),
+                                initialValue: tempDistrict,
+                                items:
+                                    tempDistricts.map<DropdownMenuItem<String>>(
+                                      (district) {
+                                        return DropdownMenuItem<String>(
+                                          value: district['Name'],
+                                          child: Text(district['Name']),
+                                        );
+                                      },
+                                    ).toList(),
+                                onChanged: (value) {
+                                  setStateDialog(() {
+                                    tempDistrict = value;
+                                    tempWard = null;
+                                    tempWards =
+                                        tempDistricts.firstWhere(
+                                          (d) => d['Name'] == value,
+                                        )['Wards'];
+                                  });
+                                },
+                              ),
+                              SizedBox(height: 16.0),
+                              DropdownButtonFormField<String>(
+                                dropdownColor: Colors.white,
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Phường/Xã',
+                                  labelStyle: TextStyle(
+                                    color: AppColors.primaryDark,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: AppColors.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: AppColors.card.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                ),
+                                initialValue: tempWard,
+                                items:
+                                    tempWards.map<DropdownMenuItem<String>>((
+                                      ward,
+                                    ) {
+                                      return DropdownMenuItem<String>(
+                                        value: ward['Name'],
+                                        child: Text(ward['Name']),
+                                      );
+                                    }).toList(),
+                                onChanged: (value) {
+                                  setStateDialog(() {
+                                    tempWard = value;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text(
+                              'Hủy',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryDark,
+                              disabledBackgroundColor: Colors.grey[300],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
+                            onPressed:
+                                tempProvince != null &&
+                                        tempDistrict != null &&
+                                        tempWard != null
+                                    ? () {
+                                      setState(() {
+                                        _selectedProvince = tempProvince;
+                                        _selectedDistrict = tempDistrict;
+                                        _selectedWard = tempWard;
+                                        _districts =
+                                            _provinces.firstWhere(
+                                              (p) => p['Name'] == tempProvince,
+                                            )['Districts'];
+                                        _wards =
+                                            _districts.firstWhere(
+                                              (d) => d['Name'] == tempDistrict,
+                                            )['Wards'];
+                                        _addressDisplayController.text =
+                                            '$_selectedWard, $_selectedDistrict, $_selectedProvince';
+                                      });
+                                      Navigator.of(context).pop();
+                                    }
+                                    : null,
+                            child: Text(
+                              'Xong',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                    ),
-                    icon: const Icon(
-                      Icons.add_location_alt_outlined,
-                      color: Colors.white,
-                    ),
-                    label: const Text(
-                      //'Add Address',
-                      'Thêm địa chỉ',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                  );
+                },
+              );
+            },
+            child: AbsorbPointer(
+              child: TextField(
+                controller: _addressDisplayController,
+                style: TextStyle(fontSize: 15, color: AppColors.text),
+                decoration: InputDecoration(
+                  labelText: 'Tỉnh/Thành phố - Quận/Huyện - Phường/Xã',
+                  labelStyle: TextStyle(
+                    color: AppColors.primaryDark,
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
+                  hintText: 'Chọn địa chỉ',
+                  hintStyle: TextStyle(color: Colors.grey[400]),
+                  prefixIcon: Icon(
+                    Icons.location_city,
+                    color: AppColors.primary,
+                  ),
+                  suffixIcon: Icon(
+                    Icons.arrow_drop_down,
+                    color: AppColors.primary,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: AppColors.card.withValues(alpha: 0.3),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                ),
               ),
-            );
-          } else {
-            final defaultAddress = address.firstWhere(
-              (addr) => addr.isDefault == 1,
-              orElse: () => address[0],
-            );
-            return AddressCardWidget(
-              title: defaultAddress.tagName,
-              name: defaultAddress.recipientName,
-              phone: defaultAddress.phoneNumber,
-              address: defaultAddress.address,
-              isDefault: false,
-              hasEditButton: false,
-              hasDeleteButton: false,
-              isTappable: true,
-              onTap: () {
-                Navigator.pushNamed(context, '/shipping-address');
-              },
-            );
-          }
-        } else if (state is AddressError) {
-          return Center(child: Text('Failed to load addresses'));
-        } else {
-          return SizedBox.shrink();
-        }
-      },
+            ),
+          ),
+          SizedBox(height: 16.0),
+
+          // Sub Address (Specific address)
+          TextField(
+            controller: _subAddressController,
+            style: TextStyle(fontSize: 15, color: AppColors.text),
+            maxLines: 1,
+            decoration: InputDecoration(
+              labelText: 'Địa chỉ cụ thể',
+              labelStyle: TextStyle(
+                color: AppColors.primaryDark,
+                fontWeight: FontWeight.w500,
+              ),
+              hintText: 'Số nhà, tên đường, thôn xóm...',
+              hintStyle: TextStyle(color: Colors.grey[400]),
+              prefixIcon: Icon(Icons.home_outlined, color: AppColors.primary),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide(color: AppColors.primary, width: 2),
+              ),
+              filled: true,
+              fillColor: AppColors.card.withValues(alpha: 0.3),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -676,96 +1150,25 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
               Icon(Icons.payment, color: AppColors.black60, size: 30),
               SizedBox(width: 8.0),
               Text(
-                //'Payment Method',
                 'Phương thức thanh toán',
                 style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
               ),
             ],
           ),
           SizedBox(height: 16.0),
-          BlocBuilder<PaymentBloc, PaymentState>(
-            builder: (context, state) {
-              if (state is PaymentLoading) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              } else if (state is PaymentLoaded) {
-                return Column(
-                  children:
-                      state.payments
-                          .map(
-                            (payment) => _buildPaymentMethodItem(
-                              payment.name,
-                              payment.imageUrl ?? '',
-                              payment.id,
-                              payment.isActive,
-                            ),
-                          )
-                          .toList(),
-                );
-              } else if (state is PaymentError) {
-                return Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      Icon(Icons.error, color: Colors.red, size: 40),
-                      SizedBox(height: 8),
-                      Text(
-                        //'Failed to load payment methods',
-                        'Tải phương thức thanh toán thất bại',
-                        style: TextStyle(color: Colors.red),
+          // Display hardcoded payment methods
+          Column(
+            children:
+                _paymentMethods
+                    .map(
+                      (payment) => _buildPaymentMethodItem(
+                        payment.name,
+                        payment.icon,
+                        payment.id,
+                        payment.isActive,
                       ),
-                      SizedBox(height: 8),
-                      Text(
-                        state.message,
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                return SizedBox.shrink();
-              }
-            },
-          ),
-          Divider(color: Colors.black54, height: 32.0, thickness: 1.5),
-          SizedBox(height: 12.0),
-          Row(
-            children: [
-              Icon(
-                Icons.currency_exchange_rounded,
-                color: Colors.black,
-                size: 30,
-              ),
-              Spacer(),
-              GestureDetector(
-                onTap: () {},
-                child: Row(
-                  children: [
-                    SizedBox(width: 4.0),
-                    Text(
-                      //'View All Options',
-                      'Xem tất cả tùy chọn',
-                      style: TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black,
-                      ),
-                    ),
-                    SizedBox(width: 8.0),
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      color: Colors.black,
-                      size: 20,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                    )
+                    .toList(),
           ),
         ],
       ),
@@ -774,9 +1177,9 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
   Widget _buildPaymentMethodItem(
     String title,
-    String logoUrl,
+    IconData icon,
     int paymentId,
-    int isActive,
+    bool isActive,
   ) {
     final isSelected = selectedPaymentId == paymentId;
 
@@ -784,7 +1187,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
       padding: EdgeInsets.only(bottom: 12.0),
       child: GestureDetector(
         onTap:
-            isActive == 1
+            isActive
                 ? () {
                   setState(() {
                     selectedPaymentId = paymentId;
@@ -798,7 +1201,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
               height: 40,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8.0),
-                color: isActive == 1 ? Colors.white : Colors.grey[200],
+                color: isActive ? Colors.white : Colors.grey[200],
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black26,
@@ -808,45 +1211,28 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                   ),
                 ],
               ),
-              child:
-                  logoUrl.isNotEmpty
-                      ? ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: Image.network(
-                          'http://10.0.2.2:8000$logoUrl',
-                          fit: BoxFit.cover,
-                          errorBuilder:
-                              (context, error, stackTrace) => Icon(
-                                Icons.payment,
-                                size: 24,
-                                color: Colors.black,
-                              ),
-                        ),
-                      )
-                      : Icon(
-                        Icons.attach_money_outlined,
-                        size: 30,
-                        color:
-                            isActive == 1
-                                ? AppColors.black70
-                                : Colors.grey[400],
-                      ),
-            ),
-            SizedBox(width: 8.0),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.w500,
-                color: isActive == 1 ? AppColors.black70 : Colors.grey[400],
+              child: Icon(
+                icon,
+                size: 24,
+                color: isActive ? AppColors.primaryDark : Colors.grey[400],
               ),
             ),
-            Spacer(),
-            if (isActive == 1) ...[
+            SizedBox(width: 12.0),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.w500,
+                  color: isActive ? AppColors.black70 : Colors.grey[400],
+                ),
+              ),
+            ),
+            if (isActive) ...[
               CustomCircleCheckbox(
                 value: isSelected,
                 onChanged: (value) {
-                  if (isActive == 1) {
+                  if (isActive) {
                     setState(() {
                       selectedPaymentId = paymentId;
                     });
@@ -1261,8 +1647,6 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   }
 
   Widget _buildBottomNavigationBar() {
-    final addressState = context.read<AddressBloc>().state;
-
     return BlocBuilder<CartBloc, CartState>(
       builder: (context, state) {
         if (state is CartLoading) {
@@ -1395,41 +1779,89 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         height: 50,
                         child: ElevatedButton(
                           onPressed:
-                              (addressState is AddressLoaded &&
-                                      addressState.addresses.isNotEmpty &&
-                                      selectedPaymentId != null)
+                              (_isAddressValid() && selectedPaymentId != null)
                                   ? () {
-                                    // Validate address
-                                    final receiver = addressState.addresses
-                                        .firstWhere(
-                                          (addr) => addr.isDefault == 1,
-                                          orElse:
-                                              () => addressState.addresses[0],
-                                        );
+                                    // Validate address fields
+                                    if (_recipientNameController.text
+                                        .trim()
+                                        .isEmpty) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Vui lòng nhập tên người nhận',
+                                          ),
+                                          backgroundColor: Colors.orange,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    if (_phoneController.text.trim().isEmpty) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Vui lòng nhập số điện thoại',
+                                          ),
+                                          backgroundColor: Colors.orange,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    if (!RegExp(
+                                      r'^0[0-9]{9,10}$',
+                                    ).hasMatch(_phoneController.text.trim())) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Số điện thoại không hợp lệ (10-11 chữ số, bắt đầu bằng 0)',
+                                          ),
+                                          backgroundColor: Colors.orange,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    if (_selectedProvince == null ||
+                                        _selectedDistrict == null ||
+                                        _selectedWard == null) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Vui lòng chọn đầy đủ địa chỉ (Tỉnh/Huyện/Xã)',
+                                          ),
+                                          backgroundColor: Colors.orange,
+                                        ),
+                                      );
+                                      return;
+                                    }
 
-                                    // Get payment method name
-                                    final paymentState =
-                                        context.read<PaymentBloc>().state;
+                                    // Get payment method name from hardcoded list
                                     String paymentMethodName = 'COD';
-                                    if (paymentState is PaymentLoaded) {
-                                      final selectedPayment = paymentState
-                                          .payments
+                                    if (selectedPaymentId != null) {
+                                      final selectedPayment = _paymentMethods
                                           .firstWhere(
                                             (p) => p.id == selectedPaymentId,
-                                            orElse:
-                                                () =>
-                                                    paymentState.payments.first,
+                                            orElse: () => _paymentMethods.first,
                                           );
                                       paymentMethodName = selectedPayment.name;
                                     }
+
                                     context.read<OrderBloc>().add(
                                       PlaceOrder(
                                         note: _noteController.text.trim(),
                                         paymentMethod: paymentMethodName,
                                         cartId: state.cart.id,
-                                        phone: receiver.phoneNumber,
-                                        address: receiver.address,
-                                        name: receiver.recipientName,
+                                        phone: _phoneController.text.trim(),
+                                        address: _getFullAddress(),
+                                        name:
+                                            _recipientNameController.text
+                                                .trim(),
                                         promotionId: selectedPromotionId,
                                       ),
                                     );
@@ -1437,9 +1869,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                   : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
-                                (addressState is AddressLoaded &&
-                                        addressState.addresses.isNotEmpty &&
-                                        selectedPaymentId != null)
+                                (_isAddressValid() && selectedPaymentId != null)
                                     ? AppColors.primaryDark
                                     : Colors.grey,
                             shape: RoundedRectangleBorder(

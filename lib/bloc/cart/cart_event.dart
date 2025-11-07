@@ -13,26 +13,6 @@ class LoadCart extends CartEvent {
   List<Object?> get props => [customerID];
 }
 
-class ToggleAllCartItemSelection extends CartEvent {
-  final List<int> cartItemId;
-  final bool isSelected;
-
-  ToggleAllCartItemSelection(this.cartItemId, this.isSelected);
-
-  @override
-  List<Object?> get props => [cartItemId, isSelected];
-}
-
-class ToggleCartItemSelection extends CartEvent {
-  final int cartItemId;
-  final bool isSelected;
-
-  ToggleCartItemSelection(this.cartItemId, this.isSelected);
-
-  @override
-  List<Object?> get props => [cartItemId, isSelected];
-}
-
 class UpdateCartItemQuantity extends CartEvent {
   final int cartItemId;
   final int newQuantity;

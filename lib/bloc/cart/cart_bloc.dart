@@ -13,54 +13,6 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<UpdateCartItemQuantity>(_onUpdateCartItemQuantity);
     on<AddToCart>(_onAddToCart);
     on<RemoveCartItem>(_onRemoveCartItem);
-    on<ToggleCartItemSelection>(_onToggleCartItemSelection);
-    on<ToggleAllCartItemSelection>(_onToggleAllCartItemSelection);
-  }
-
-  Future<void> _onToggleAllCartItemSelection(
-    ToggleAllCartItemSelection event,
-    Emitter<CartState> emit,
-  ) async {
-    if (state is CartLoaded) {
-      final currentState = state as CartLoaded;
-      emit(CartLoading());
-      try {
-        for (var id in event.cartItemId) {
-          await _cartService.toggleCartItem(id, event.isSelected);
-        }
-        final updatedCart = await _cartService.getMyCart(1);
-        emit(
-          CartLoaded(
-            cart: updatedCart,
-            relatedBooks: currentState.relatedBooks,
-          ),
-        );
-      } catch (e) {
-        emit(CartError(e.toString()));
-      }
-    }
-  }
-
-  Future<void> _onToggleCartItemSelection(
-    ToggleCartItemSelection event,
-    Emitter<CartState> emit,
-  ) async {
-    if (state is CartLoaded) {
-      final currentState = state as CartLoaded;
-      emit(CartLoading());
-      try {
-        await _cartService.toggleCartItem(event.cartItemId, event.isSelected);
-        final updatedCart = await _cartService.getMyCart(1);
-        emit(
-          CartLoaded(
-            cart: updatedCart,
-            relatedBooks: currentState.relatedBooks,
-          ),
-        );
-      } catch (e) {
-        emit(CartError(e.toString()));
-      }
-    }
   }
 
   Future<void> _onLoadCart(LoadCart event, Emitter<CartState> emit) async {

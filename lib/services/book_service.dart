@@ -86,7 +86,7 @@ class BookService {
 
   Future<Book> getBookDetail(int id) async {
     try {
-      final response = await apiClient.publicDio.get('/book/$id');
+      final response = await apiClient.privateDio.get('/products/$id');
       if (response.statusCode == 200) {
         final data = response.data;
         if (data is Map<String, dynamic> && data['data'] != null) {
@@ -97,6 +97,20 @@ class BookService {
       } else {
         throw Exception('Failed to load book (status: ${response.statusCode})');
       }
+    } on DioException catch (dioError) {
+      debugPrint('❌ DioException khi tạo đơn hàng: ${dioError.message}');
+
+      if (dioError.response != null) {
+        debugPrint('Status code: ${dioError.response?.statusCode}');
+        debugPrint('Data: ${dioError.response?.data}');
+        debugPrint('Headers: ${dioError.response?.headers}');
+      } else {
+        debugPrint('Message: ${dioError.message}');
+      }
+      final msg =
+          dioError.response?.data?['message'] ?? 'Lỗi kết nối đến server';
+      debugPrint('Chi tiết lỗi: $msg');
+      throw msg; // 👉 chỉ ném chuỗi lỗi, không bọc trong Exception
     } catch (e) {
       throw Exception('Error loading book: $e');
     }

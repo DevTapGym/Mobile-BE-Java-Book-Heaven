@@ -459,7 +459,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   notificationSwitch.value = newValue;
                                 },
                                 inactiveThumbColor: Colors.black45,
-                                activeColor: AppColors.primaryDark,
+                                activeThumbColor: AppColors.primaryDark,
                               ),
                               onTap: () {
                                 notificationSwitch.value =

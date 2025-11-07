@@ -56,7 +56,7 @@ Future<void> main() async {
   final authService = AuthService();
   final apiClient = ApiClient(storage, authService);
 
-  final cartRepository = CartService(apiClient);
+  final cartRepository = CartService(apiClient, authService);
   final bookRepository = BookService(apiClient);
   final addressService = AddressService(apiClient);
   final orderService = OrderService(apiClient);

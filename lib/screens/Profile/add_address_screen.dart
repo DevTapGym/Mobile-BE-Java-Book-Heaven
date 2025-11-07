@@ -288,7 +288,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                                           //labelText: 'Province/City',
                                           labelText: 'Tỉnh/Thành phố',
                                         ),
-                                        value: tempProvince,
+                                        initialValue: tempProvince,
                                         items:
                                             provinces.map<
                                               DropdownMenuItem<String>
@@ -319,7 +319,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                                           //labelText: 'District',
                                           labelText: 'Quận/Huyện',
                                         ),
-                                        value: tempDistrict,
+                                        initialValue: tempDistrict,
                                         items:
                                             tempDistricts.map<
                                               DropdownMenuItem<String>
@@ -348,7 +348,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                                           //labelText: 'Ward/Commune',
                                           labelText: 'Phường/Xã',
                                         ),
-                                        value: tempWard,
+                                        initialValue: tempWard,
                                         items:
                                             tempWards.map<
                                               DropdownMenuItem<String>
@@ -488,7 +488,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                                 defaultSwitch.value = newValue;
                               },
                               inactiveThumbColor: Colors.black45,
-                              activeColor: AppColors.primaryDark,
+                              activeThumbColor: AppColors.primaryDark,
                             ),
                             onTap: () {
                               defaultSwitch.value = !defaultSwitch.value;

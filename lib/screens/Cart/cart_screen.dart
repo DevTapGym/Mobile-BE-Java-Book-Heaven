@@ -303,12 +303,12 @@ class _CartScreenState extends State<CartScreen> {
                   CustomCircleCheckbox(
                     value: cartItems.every((item) => item.isSelected),
                     onChanged: (value) {
-                      final List<int> allCartItemIds =
-                          cartItems.map((item) => item.id).toList();
-
-                      context.read<CartBloc>().add(
-                        ToggleAllCartItemSelection(allCartItemIds, value!),
-                      );
+                      setState(() {
+                        // Toggle tất cả items thành true hoặc false
+                        for (var item in cartItems) {
+                          item.isSelected = value!;
+                        }
+                      });
                     },
                   ),
                   SizedBox(width: 8),
@@ -488,10 +488,6 @@ class _CartScreenState extends State<CartScreen> {
                 setState(() {
                   items.isSelected = value!;
                 });
-
-                context.read<CartBloc>().add(
-                  ToggleCartItemSelection(items.id, items.isSelected),
-                );
               },
             ),
             SizedBox(width: 10),
@@ -556,6 +552,7 @@ class _CartScreenState extends State<CartScreen> {
               padding: EdgeInsets.symmetric(vertical: 14),
               child: SizedBox(
                 height: 160,
+                width: 240,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

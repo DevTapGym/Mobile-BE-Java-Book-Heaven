@@ -61,9 +61,10 @@ class BookBloc extends Bloc<BookEvent, BookState> {
   ) async {
     emit(BookLoading());
     try {
-      final categoryBooks = await bookService.getBooksByCategory(
-        event.categoryId,
-      );
+      // final categoryBooks = await bookService.getBooksByCategory(
+      //   event.categoryId,
+      // );
+      final categoryBooks = await bookService.getAllBooks();
       emit(BookCategoryLoaded(categoryBooks));
     } catch (e) {
       emit(BookError(e.toString()));
@@ -90,10 +91,11 @@ class BookBloc extends Bloc<BookEvent, BookState> {
     emit(BookLoading());
     try {
       final bookDetail = await bookService.getBookDetail(event.id);
-      final relatedBooks = await bookService.getBooksByCategory(
-        bookDetail.categories.first.id,
-      );
-      relatedBooks.removeWhere((book) => book.id == bookDetail.id);
+      // final relatedBooks = await bookService.getBooksByCategory(
+      //   bookDetail.categories.first.id,
+      // );
+      // relatedBooks.removeWhere((book) => book.id == bookDetail.id);
+      final relatedBooks = await bookService.getAllBooks();
 
       emit(BookDetailLoaded(book: bookDetail, relatedBooks: relatedBooks));
     } catch (e) {

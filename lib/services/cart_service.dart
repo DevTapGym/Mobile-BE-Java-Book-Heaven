@@ -2,12 +2,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:heaven_book_app/model/cart.dart';
 import 'package:heaven_book_app/services/api_client.dart';
+import 'package:heaven_book_app/services/auth_service.dart';
 
 class CartService {
   final ApiClient apiClient;
+  final AuthService authService;
   int? _cartId;
 
-  CartService(this.apiClient);
+  CartService(this.apiClient, this.authService);
 
   Future<Cart> getMyCart(int customerID) async {
     try {
@@ -62,8 +64,12 @@ class CartService {
   Future<void> updateCartItemQuantity(int cartItemId, int newQuantity) async {
     try {
       final response = await apiClient.privateDio.put(
-        '/cart/update/$cartItemId',
-        data: {'quantity': newQuantity},
+        '/cart/update',
+        data: {
+          'quantity': newQuantity,
+          'cartId': _cartId,
+          'cartItemId': cartItemId,
+        },
       );
 
       if (response.statusCode != 200) {
@@ -82,17 +88,15 @@ class CartService {
 
   Future<String> addToCart(int bookId, int quantity) async {
     try {
-      // Đảm bảo có cartId trước khi add
-      if (_cartId == null) {
-        await getMyCart(1); // Lấy cart để có _cartId
-      }
+      final user = await authService.getCurrentUser();
+      final email = user.email;
 
       final response = await apiClient.privateDio.post(
         '/cart/add',
-        data: {'book_id': bookId, 'quantity': quantity, 'cart_id': _cartId},
+        data: {'email': email, 'productId': bookId, 'quantity': quantity},
       );
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 201 || response.statusCode == 200) {
         return "Item added to cart successfully";
       } else {
         throw Exception(
@@ -112,7 +116,7 @@ class CartService {
   Future<String> removeCartItem(int cartItemId) async {
     try {
       final response = await apiClient.privateDio.delete(
-        '/cart/remove/$cartItemId',
+        '/cart/delete/$cartItemId',
       );
 
       if (response.statusCode == 200) {
@@ -122,9 +126,20 @@ class CartService {
           'Failed to remove cart item (status: ${response.statusCode})',
         );
       }
-    } on DioException catch (e) {
-      debugPrint('DioException in removeCartItem: $e');
-      rethrow;
+    } on DioException catch (dioError) {
+      debugPrint('❌ DioException khi tạo đơn hàng: ${dioError.message}');
+
+      if (dioError.response != null) {
+        debugPrint('Status code: ${dioError.response?.statusCode}');
+        debugPrint('Data: ${dioError.response?.data}');
+        debugPrint('Headers: ${dioError.response?.headers}');
+      } else {
+        debugPrint('Message: ${dioError.message}');
+      }
+      final msg =
+          dioError.response?.data?['message'] ?? 'Lỗi kết nối đến server';
+      debugPrint('Chi tiết lỗi: $msg');
+      throw msg; // 👉 chỉ ném chuỗi lỗi, không bọc trong Exception
     } catch (e) {
       debugPrint('Error in removeCartItem: $e');
       throw Exception('Error removing cart item: $e');
