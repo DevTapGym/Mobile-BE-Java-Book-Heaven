@@ -16,6 +16,7 @@ class RewardScreen extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           backgroundColor: AppColors.primary,
           centerTitle: true,
@@ -302,153 +303,17 @@ class _VoucherTabState extends State<VoucherTab> {
                     : 'Giảm giá cố định',
             showRedeemButton: false,
             voucherCode: promotion.code,
-            onTap: () => _showVoucherDetails(context, promotion),
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                '/detail-voucher',
+                arguments: {'promotion': promotion},
+              );
+            },
           );
         }),
       ],
     );
-  }
-
-  void _showVoucherDetails(BuildContext context, promotion) {
-    showDialog(
-      context: context,
-      builder: (builder) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Icon(Icons.card_giftcard, color: AppColors.primary),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Chi tiết Voucher',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildDetailRow('Mã', promotion.code),
-                _buildDetailRow('Tên', promotion.name),
-                _buildDetailRow(
-                  'Loại',
-                  promotion.promotionType == 'freeship'
-                      ? 'Miễn phí vận chuyển'
-                      : promotion.promotionType == 'percentage'
-                      ? 'Giảm theo %'
-                      : 'Giảm giá cố định',
-                ),
-                if (promotion.promotionValue != null)
-                  _buildDetailRow(
-                    'Giá trị',
-                    promotion.promotionType == 'percentage'
-                        ? '${promotion.promotionValue?.toInt() ?? 0}%'
-                        : FormatPrice.formatPrice(
-                          promotion.promotionValue ?? 0,
-                        ),
-                  ),
-                if (promotion.orderMinValue != null)
-                  _buildDetailRow(
-                    'Đơn tối thiểu',
-                    FormatPrice.formatPrice(promotion.orderMinValue ?? 0),
-                  ),
-                if (promotion.maxPromotionValue != null &&
-                    promotion.isMaxPromotionValue)
-                  _buildDetailRow(
-                    'Giảm tối đa',
-                    FormatPrice.formatPrice(promotion.maxPromotionValue ?? 0),
-                  ),
-                if (promotion.startDate != null)
-                  _buildDetailRow(
-                    'Ngày bắt đầu',
-                    _formatDate(promotion.startDate!),
-                  ),
-                if (promotion.endDate != null)
-                  _buildDetailRow(
-                    'Ngày hết hạn',
-                    _formatDate(promotion.endDate!),
-                  ),
-                if (promotion.note != null && promotion.note!.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Ghi chú:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          promotion.note!,
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                'Đóng',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[700],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(value, style: TextStyle(color: Colors.grey[800])),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(String dateString) {
-    try {
-      final date = DateFormat('yyyy-MM-dd').parse(dateString);
-      return DateFormat('dd/MM/yyyy').format(date);
-    } catch (e) {
-      return dateString;
-    }
   }
 }
 

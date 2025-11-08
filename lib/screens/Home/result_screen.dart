@@ -26,7 +26,7 @@ class ResultScreen extends StatefulWidget {
 }
 
 class _ResultScreenState extends State<ResultScreen> {
-  String _selectedSortOption = 'Popular';
+  String _selectedSortOption = 'Phổ biến';
   String _selectedViewType = 'grid';
   final TextEditingController _searchController = TextEditingController();
   bool _isInitialized = false;
@@ -34,12 +34,11 @@ class _ResultScreenState extends State<ResultScreen> {
   bool _categoryInitialized = false;
 
   final List<String> _sortOptions = [
-    'Popular',
-    'Price: Low to High',
-    'Price: High to Low',
-    'Rating',
-    'Newest',
-    'Title A-Z',
+    'Phổ biến',
+    'Giá: Thấp đến Cao',
+    'Giá: Cao đến Thấp',
+    'Mới nhất',
+    'Tên A-Z',
   ];
 
   @override
@@ -251,24 +250,20 @@ class _ResultScreenState extends State<ResultScreen> {
 
   void _sortBooks(List<Book> books) {
     switch (_selectedSortOption) {
-      case 'Price: Low to High':
+      case 'Giá: Thấp đến Cao':
         books.sort((a, b) => a.price.compareTo(b.price));
         break;
-      case 'Price: High to Low':
+      case 'Giá: Cao đến Thấp':
         books.sort((a, b) => b.price.compareTo(a.price));
         break;
-      case 'Rating':
-        // Since Book model doesn't have rating, we'll sort by sold (popularity)
-        books.sort((a, b) => b.sold.compareTo(a.sold));
-        break;
-      case 'Newest':
+      case 'Mới nhất':
         // Simulate newest first (using id as proxy)
         books.sort((a, b) => b.id.compareTo(a.id));
         break;
-      case 'Title A-Z':
+      case 'Tên A-Z':
         books.sort((a, b) => a.title.compareTo(b.title));
         break;
-      default: // Popular
+      default: // Phổ biến
         books.sort((a, b) => b.sold.compareTo(a.sold));
         break;
     }
@@ -342,9 +337,9 @@ class _ResultScreenState extends State<ResultScreen> {
                           args['type'] == 'filter' &&
                           args['query'] != null &&
                           !_categoryInitialized) {
-                        final categoryId = args['query'] as int;
+                        final categoryName = args['query'] as String;
                         final matchedCategories = state.categories.where(
-                          (cat) => cat.id == categoryId,
+                          (cat) => cat.name == categoryName,
                         );
                         final matchedCategory =
                             matchedCategories.isNotEmpty
@@ -415,9 +410,9 @@ class _ResultScreenState extends State<ResultScreen> {
                                             () =>
                                                 categoryState.categories.first,
                                       );
-                                  // Load sách theo category ID
+                                  // Load sách theo category name
                                   context.read<BookBloc>().add(
-                                    LoadCategoryBooks(selectedCategoryObj.id),
+                                    LoadCategoryBooks(selectedCategoryObj.name),
                                   );
                                 }
                               }
@@ -603,7 +598,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     child:
                         book.thumbnail.isNotEmpty
                             ? Image.network(
-                              'http://10.0.2.2:8000${book.thumbnail}',
+                              'http://10.0.2.2:8080/storage/product/${book.thumbnail}',
                               width: double.infinity,
                               height: 160,
                               fit: BoxFit.cover,
@@ -812,7 +807,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     child:
                         book.thumbnail.isNotEmpty
                             ? Image.network(
-                              'http://10.0.2.2:8000${book.thumbnail}',
+                              'http://10.0.2.2:8080/storage/product/${book.thumbnail}',
                               width: 100,
                               height: 160,
                               fit: BoxFit.cover,

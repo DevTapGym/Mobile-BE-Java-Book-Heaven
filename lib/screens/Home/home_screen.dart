@@ -386,7 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'book_id': bannerBooks.isNotEmpty ? bannerBooks[0].id : null,
               'books':
                   bannerBooks.isNotEmpty
-                      ? 'http://10.0.2.2:8000${bannerBooks[0].thumbnail}'
+                      ? 'http://10.0.2.2:8080/storage/product/${bannerBooks[0].thumbnail}'
                       : null,
             },
             {
@@ -402,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'book_id': bannerBooks.isNotEmpty ? bannerBooks[1].id : null,
               'books':
                   bannerBooks.length > 1
-                      ? 'http://10.0.2.2:8000${bannerBooks[1].thumbnail}'
+                      ? 'http://10.0.2.2:8080/storage/product/${bannerBooks[1].thumbnail}'
                       : null,
             },
             {
@@ -421,7 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'book_id': bannerBooks.isNotEmpty ? bannerBooks[2].id : null,
               'books':
                   bannerBooks.length > 2
-                      ? 'http://10.0.2.2:8000${bannerBooks[2].thumbnail}'
+                      ? 'http://10.0.2.2:8080/storage/product/${bannerBooks[2].thumbnail}'
                       : null,
             },
             {
@@ -437,7 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'book_id': bannerBooks.isNotEmpty ? bannerBooks[3].id : null,
               'books':
                   bannerBooks.length > 3
-                      ? 'http://10.0.2.2:8000${bannerBooks[3].thumbnail}'
+                      ? 'http://10.0.2.2:8080/storage/product/${bannerBooks[3].thumbnail}'
                       : null,
             },
           ];
@@ -1628,7 +1628,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: const ResultScreen(),
                   ),
               settings: RouteSettings(
-                arguments: {'type': 'filter', 'query': category.id},
+                arguments: {'type': 'filter', 'query': category.name},
               ),
             ),
           );

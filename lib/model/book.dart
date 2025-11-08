@@ -13,7 +13,7 @@ class Book {
   final int sold;
   final double saleOff;
   final bool isActive;
-  final List<Category> categories;
+  final Category categories;
   final List<BookImage> images;
   final List<BookFeature> features;
 
@@ -28,7 +28,7 @@ class Book {
     required this.saleOff,
     required this.isActive,
     this.description,
-    this.categories = const [],
+    required this.categories,
     this.images = const [],
     this.features = const [],
   });
@@ -43,20 +43,20 @@ class Book {
       price: double.tryParse(json['price'].toString()) ?? 0.0,
       quantity: json['quantity'] ?? 0,
       sold: json['sold'] ?? 0,
-      saleOff: double.tryParse(json['sale_off']?.toString() ?? '0') ?? 0.0,
-      isActive: json['is_active'] == 1 || json['isDeleted'] == 0,
+      saleOff:
+          double.tryParse(
+            json['sale_off']?.toString() ?? json['saleOff']?.toString() ?? '0',
+          ) ??
+          0.0,
+      isActive: json['isDeleted'] == 0,
 
-      // Xử lý category - có thể là object hoặc list
+      // Xử lý category - BE trả về 'category' (object)
       categories:
-          json['categories'] != null
-              ? (json['categories'] as List)
-                  .map((e) => Category.fromJson(Map<String, dynamic>.from(e)))
-                  .toList()
-              : json['category'] != null
-              ? [Category.fromJson(Map<String, dynamic>.from(json['category']))]
-              : [],
+          json['category'] != null
+              ? Category.fromJson(Map<String, dynamic>.from(json['category']))
+              : Category(id: 0, name: 'Unknown'),
 
-      // Xử lý images - có thể là book_images hoặc productImages
+      // Xử lý images - BE trả về 'productImages' (array)
       images:
           json['productImages'] != null
               ? (json['productImages'] as List)

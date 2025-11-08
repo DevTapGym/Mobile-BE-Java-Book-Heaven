@@ -168,13 +168,15 @@ class BookService {
 
   Future<List<Book>> getBestSellingBooksInYear() async {
     try {
-      final response = await apiClient.publicDio.get('/book/top-selling');
+      final response = await apiClient.privateDio.get(
+        '/products?sort=sold,desc',
+      );
 
       if (response.statusCode == 200) {
         final data = response.data;
 
-        if (data is Map<String, dynamic> && data['data'] is List) {
-          final List<dynamic> bookList = data['data'];
+        if (data is Map<String, dynamic> && data['data']['result'] is List) {
+          final List<dynamic> bookList = data['data']['result'];
           return bookList
               .map((e) => Book.fromJson(Map<String, dynamic>.from(e)))
               .toList();
@@ -218,13 +220,15 @@ class BookService {
 
   Future<List<Book>> searchBooks(String query) async {
     try {
-      final response = await apiClient.publicDio.get('/book/search/$query');
+      final response = await apiClient.privateDio.get(
+        '/products?filter=name~\'$query\'',
+      );
 
       if (response.statusCode == 200) {
         final data = response.data;
 
-        if (data is Map<String, dynamic> && data['data'] is List) {
-          final List<dynamic> bookList = data['data'];
+        if (data is Map<String, dynamic> && data['data']['result'] is List) {
+          final List<dynamic> bookList = data['data']['result'];
           return bookList
               .map((e) => Book.fromJson(Map<String, dynamic>.from(e)))
               .toList();
@@ -241,17 +245,17 @@ class BookService {
     }
   }
 
-  Future<List<Book>> getBooksByCategory(int categoryId) async {
+  Future<List<Book>> getBooksByCategory(String categoryName) async {
     try {
-      final response = await apiClient.publicDio.get(
-        '/book/category/$categoryId',
+      final response = await apiClient.privateDio.get(
+        '/products?filter=category.name~\'$categoryName\'',
       );
 
       if (response.statusCode == 200) {
         final data = response.data;
 
-        if (data is Map<String, dynamic> && data['data'] is List) {
-          final List<dynamic> bookList = data['data'];
+        if (data is Map<String, dynamic> && data['data']['result'] is List) {
+          final List<dynamic> bookList = data['data']['result'];
           return bookList
               .map((e) => Book.fromJson(Map<String, dynamic>.from(e)))
               .toList();

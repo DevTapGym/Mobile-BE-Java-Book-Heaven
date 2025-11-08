@@ -5,6 +5,6 @@ class BookImage {
   BookImage({required this.id, required this.url});
 
   factory BookImage.fromJson(Map<String, dynamic> json) {
-    return BookImage(id: json['id'], url: json['imageUrl'] ?? '');
+    return BookImage(id: json['id'], url: json['url'] ?? '');
   }
 }
