@@ -34,14 +34,18 @@ class UpdateOrderStatus extends OrderEvent {
 }
 
 class CreateOrder extends OrderEvent {
+  final int customerId;
   final String note;
   final String paymentMethod;
   final String phone;
   final String address;
   final String name;
+  final int? promotionId;
   final List<Map<String, dynamic>> items;
 
   CreateOrder({
+    required this.customerId,
+    this.promotionId,
     required this.note,
     required this.paymentMethod,
     required this.phone,
@@ -51,7 +55,15 @@ class CreateOrder extends OrderEvent {
   });
 
   @override
-  List<Object?> get props => [note, paymentMethod, phone, address, name, items];
+  List<Object?> get props => [
+    customerId,
+    note,
+    paymentMethod,
+    phone,
+    address,
+    name,
+    items,
+  ];
 }
 
 class PlaceOrder extends OrderEvent {

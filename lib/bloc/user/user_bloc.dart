@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:heaven_book_app/bloc/user/user_event.dart';
 import 'package:heaven_book_app/bloc/user/user_state.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/services/auth_service.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,6 +23,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     emit(UserLoading());
     try {
       final userInfo = await authService.getCurrentUser();
+      AppSession().currentUser = userInfo;
       debugPrint('Loaded user info: $userInfo');
       emit(UserLoaded(userData: userInfo));
     } catch (e) {

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heaven_book_app/bloc/order/order_event.dart';
 import 'package:heaven_book_app/bloc/order/order_state.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/services/order_service.dart';
 
 class OrderBloc extends Bloc<OrderEvent, OrderState> {
@@ -52,7 +53,9 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         note: event.note,
       );
       if (success) {
-        final orders = await _orderService.loadAllOrder();
+        final orders = await _orderService.loadAllOrderByCustomer(
+          AppSession().currentUser!.id,
+        );
         emit(
           OrderLoaded(
             orders: orders,
@@ -74,18 +77,17 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     emit(OrderLoading());
     try {
       final success = await _orderService.createOrder(
-        note: event.note,
+        customerId: event.customerId,
         paymentMethod: event.paymentMethod,
         phone: event.phone,
         address: event.address,
         name: event.name,
         items: event.items,
+        promotionId: event.promotionId,
       );
       if (success) {
-        final orders = await _orderService.loadAllOrder();
-        emit(
-          OrderLoaded(orders: orders, message: 'Order created successfully'),
-        );
+        //final orders = await _orderService.loadAllOrder();
+        emit(OrderLoaded(orders: [], message: 'Order created successfully'));
       } else {
         emit(OrderError('Failed to create order'));
       }
@@ -123,7 +125,10 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   ) async {
     emit(OrderLoading());
     try {
-      final orders = await _orderService.loadAllOrder();
+      //final orders = await _orderService.loadAllOrder();
+      final orders = await _orderService.loadAllOrderByCustomer(
+        AppSession().currentUser!.id,
+      );
       emit(OrderLoaded(orders: orders));
     } catch (e) {
       emit(OrderError(e.toString()));

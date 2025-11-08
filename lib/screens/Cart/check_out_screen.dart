@@ -8,6 +8,8 @@ import 'package:heaven_book_app/bloc/order/order_state.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_bloc.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_event.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_state.dart';
+import 'package:heaven_book_app/bloc/user/user_bloc.dart';
+import 'package:heaven_book_app/bloc/user/user_state.dart';
 import 'package:heaven_book_app/model/promotion.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
 import 'package:heaven_book_app/themes/format_price.dart';
@@ -681,7 +683,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8.0),
                   child: Image.network(
-                    'http://10.0.2.2:8000$thumbnailUrl',
+                    'http://10.0.2.2:8080/storage/Product/$thumbnailUrl',
                     fit: BoxFit.cover,
                     errorBuilder:
                         (context, error, stackTrace) => Icon(
@@ -726,55 +728,18 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                       ),
                     ),
                   SizedBox(height: 12.0),
-                  Text(
-                    price,
-                    style: TextStyle(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black,
-                    ),
-                  ),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        originalPrice,
+                        price,
                         style: TextStyle(
-                          decoration: TextDecoration.lineThrough,
-                          decorationColor: Colors.grey,
-                          color: Colors.grey,
-                          fontSize: 15,
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black,
                         ),
                       ),
                       SizedBox(width: 8),
-                      if (discount > 0) ...[
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.discountRed,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 4,
-                                offset: Offset(2, 4),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            '-$discount%',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-
                       Spacer(),
                       Text(
                         quantity,
@@ -896,9 +861,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                   ...cartItems.map(
                     (item) => _buildProductItem(
                       title: item.bookName,
-                      price: FormatPrice.formatPrice(
-                        item.unitPrice - (item.unitPrice * item.sale / 100),
-                      ),
+                      price: FormatPrice.formatPrice(item.unitPrice),
                       thumbnailUrl: item.bookThumbnail,
                       originalPrice: FormatPrice.formatPrice(item.unitPrice),
                       discount: item.sale.toInt(),
@@ -1841,6 +1804,26 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                       return;
                                     }
 
+                                    // Get user data
+                                    final authState =
+                                        context.read<UserBloc>().state;
+
+                                    if (authState is! UserLoaded) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Vui lòng đăng nhập để đặt hàng',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    final userData = authState.userData;
+
                                     // Get payment method name from hardcoded list
                                     String paymentMethodName = 'COD';
                                     if (selectedPaymentId != null) {
@@ -1852,17 +1835,28 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                       paymentMethodName = selectedPayment.name;
                                     }
 
+                                    // Build items list from cart
+                                    final items =
+                                        cartItems.map((item) {
+                                          return {
+                                            'productId': item.bookId,
+                                            'quantity': item.quantity,
+                                          };
+                                        }).toList();
+
+                                    // Dispatch CreateOrder event
                                     context.read<OrderBloc>().add(
-                                      PlaceOrder(
+                                      CreateOrder(
                                         note: _noteController.text.trim(),
                                         paymentMethod: paymentMethodName,
-                                        cartId: state.cart.id,
                                         phone: _phoneController.text.trim(),
                                         address: _getFullAddress(),
                                         name:
                                             _recipientNameController.text
                                                 .trim(),
+                                        items: items,
                                         promotionId: selectedPromotionId,
+                                        customerId: userData.customer!.id,
                                       ),
                                     );
                                   }

@@ -10,6 +10,8 @@ import 'package:heaven_book_app/bloc/order/order_state.dart';
 import 'package:heaven_book_app/bloc/payment/payment_bloc.dart';
 import 'package:heaven_book_app/bloc/payment/payment_event.dart';
 import 'package:heaven_book_app/bloc/payment/payment_state.dart';
+import 'package:heaven_book_app/bloc/user/user_bloc.dart';
+import 'package:heaven_book_app/bloc/user/user_state.dart';
 import 'package:heaven_book_app/model/checkout.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
 import 'package:heaven_book_app/themes/format_price.dart';
@@ -1064,16 +1066,23 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
                                 )
                                 .toList();
 
-                        context.read<OrderBloc>().add(
-                          CreateOrder(
-                            note: _noteController.text.trim(),
-                            paymentMethod: paymentMethodName,
-                            phone: receiver.phoneNumber,
-                            address: receiver.address,
-                            name: receiver.recipientName,
-                            items: items,
-                          ),
-                        );
+                        final authState = context.read<UserBloc>().state;
+
+                        if (authState is UserLoaded) {
+                          final data = authState.userData;
+
+                          context.read<OrderBloc>().add(
+                            CreateOrder(
+                              note: _noteController.text.trim(),
+                              paymentMethod: paymentMethodName,
+                              phone: receiver.phoneNumber,
+                              address: receiver.address,
+                              name: receiver.recipientName,
+                              items: items,
+                              customerId: data.customer!.id,
+                            ),
+                          );
+                        }
                       }
                       : null,
               style: ElevatedButton.styleFrom(

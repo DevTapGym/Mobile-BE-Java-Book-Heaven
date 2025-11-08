@@ -24,17 +24,23 @@ class OrderItem {
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
+    final product = json['product'] ?? {};
+
     return OrderItem(
       id: json['id'],
       quantity: int.parse(json['quantity'].toString()),
-      unitPrice: double.parse(json['unit_price'].toString()),
-      totalPrice: double.parse(json['total_price'].toString()),
-      bookId: json['book_id'],
-      bookTitle: json['book_title'] ?? '',
-      bookAuthor: json['book_author'] ?? '',
-      bookThumbnail: json['book_thumbnail'] ?? '',
-      bookDescription: json['book_description'] ?? '',
-      bookSaleOff: double.parse(json['book_sale_off'].toString()),
+      unitPrice: double.parse(
+        json['price'].toString(),
+      ), // đổi unit_price -> price
+      totalPrice: double.parse(
+        json['totalPrice'].toString(),
+      ), // đổi total_price -> totalPrice
+      bookId: product['id'] ?? 0, // đổi book_id -> product.id
+      bookTitle: product['name'] ?? '',
+      bookAuthor: product['author'] ?? '',
+      bookThumbnail: '', // JSON không có ảnh
+      bookDescription: '', // JSON không có mô tả
+      bookSaleOff: 0, // JSON không có sale_off
     );
   }
 }

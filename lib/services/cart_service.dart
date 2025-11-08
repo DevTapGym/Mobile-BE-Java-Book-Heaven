@@ -19,7 +19,6 @@ class CartService {
 
       if (response.statusCode == 200) {
         final body = response.data;
-
         if (body is Map<String, dynamic> && body['data'] != null) {
           final cartData = Map<String, dynamic>.from(body['data']);
           final cart = Cart.fromJson(cartData);
@@ -29,10 +28,17 @@ class CartService {
           throw Exception('Invalid API response format');
         }
       } else {
-        throw Exception('Failed to load cart (status: ${response.statusCode})');
+        throw Exception('Unexpected status: ${response.statusCode}');
       }
     } on DioException catch (e) {
-      debugPrint('DioException in getMyCart: $e');
+      if (e.response?.statusCode == 400 &&
+          e.response?.data?['message'] == 'Cart not found') {
+        debugPrint('⚠️ Cart not found -> tạo cart tạm');
+        final tempCart = Cart(id: 0, items: [], totalPrice: 0.0, totalItems: 0);
+        return tempCart;
+      }
+
+      debugPrint('❌ DioException in getMyCart: ${e.message}');
       rethrow;
     } catch (e) {
       debugPrint('Error in getMyCart: $e');
