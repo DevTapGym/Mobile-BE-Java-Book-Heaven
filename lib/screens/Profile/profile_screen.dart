@@ -385,12 +385,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: CircleAvatar(
                                 radius: 80,
                                 backgroundImage:
-                                    user.avatarUrl != null &&
-                                            user.avatarUrl!.contains(
-                                              'storage/Avatar',
-                                            )
+                                    user.avatarUrl != null
                                         ? Image.network(
-                                          'http://10.0.2.2:8000${user.avatarUrl}',
+                                          'http://10.0.2.2:8080/storage/Avatar/${user.avatarUrl}',
                                           errorBuilder: (
                                             context,
                                             error,
@@ -403,7 +400,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             );
                                           },
                                         ).image
-                                        : NetworkImage('${user.avatarUrl}'),
+                                        : NetworkImage(
+                                          'https://i.pinimg.com/1200x/15/b2/dd/15b2dde4fae9ee8f9b748b8b2a832415.jpg',
+                                        ),
                               ),
                             ),
                           ),
@@ -460,7 +459,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   notificationSwitch.value = newValue;
                                 },
                                 inactiveThumbColor: Colors.black45,
-                                activeColor: AppColors.primaryDark,
+                                activeThumbColor: AppColors.primaryDark,
                               ),
                               onTap: () {
                                 notificationSwitch.value =

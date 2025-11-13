@@ -17,10 +17,10 @@ class LoadSearchBooks extends BookEvent {
 }
 
 class LoadCategoryBooks extends BookEvent {
-  final int categoryId;
-  LoadCategoryBooks(this.categoryId);
+  final String categoryName;
+  LoadCategoryBooks(this.categoryName);
   @override
-  List<Object?> get props => [categoryId];
+  List<Object?> get props => [categoryName];
 }
 
 class LoadBookDetail extends BookEvent {

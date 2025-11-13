@@ -6,6 +6,10 @@ class ReturnOrderItem {
   ReturnOrderItem({this.bookId, this.quantity, this.orderItemId});
 
   Map<String, dynamic> toJson() {
-    return {'bookId': bookId, 'quantity': quantity, 'orderItemId': orderItemId};
+    return {
+      'productId': bookId,
+      'quantity': quantity,
+      'orderItemId': orderItemId,
+    };
   }
 }

@@ -134,7 +134,7 @@ class BookCard extends StatelessWidget {
                 child:
                     thumbnail != null && thumbnail!.isNotEmpty
                         ? Image.network(
-                          'http://10.0.2.2:8000$thumbnail',
+                          'http://10.0.2.2:8080/storage/Product/$thumbnail',
                           width: double.infinity,
                           height: 170,
                           fit: BoxFit.cover,

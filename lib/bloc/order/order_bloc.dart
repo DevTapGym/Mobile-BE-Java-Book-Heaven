@@ -1,14 +1,17 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heaven_book_app/bloc/order/order_event.dart';
 import 'package:heaven_book_app/bloc/order/order_state.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/services/order_service.dart';
+import 'package:heaven_book_app/services/cart_service.dart';
 
 class OrderBloc extends Bloc<OrderEvent, OrderState> {
   final OrderService _orderService;
+  final CartService _cartService;
 
-  OrderBloc(this._orderService) : super(OrderInitial()) {
-    on<LoadAllOrders>(_onLoadCategories);
-    on<LoadDetailOrder>(_onLoadDetailOrder);
+  OrderBloc(this._orderService, this._cartService) : super(OrderInitial()) {
+    on<LoadAllOrders>(_onLoadAllOrders);
     on<PlaceOrder>(_onPlaceOrder);
     on<CreateOrder>(_onCreateOrder);
     on<UpdateOrderStatus>(_onUpdateOrderStatus);
@@ -52,7 +55,9 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         note: event.note,
       );
       if (success) {
-        final orders = await _orderService.loadAllOrder();
+        final orders = await _orderService.loadAllOrderByCustomer(
+          AppSession().currentUser!.id,
+        );
         emit(
           OrderLoaded(
             orders: orders,
@@ -74,15 +79,31 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     emit(OrderLoading());
     try {
       final success = await _orderService.createOrder(
-        note: event.note,
+        customerId: event.customerId,
         paymentMethod: event.paymentMethod,
         phone: event.phone,
         address: event.address,
         name: event.name,
         items: event.items,
+        promotionId: event.promotionId,
       );
       if (success) {
-        final orders = await _orderService.loadAllOrder();
+        // Xóa các sản phẩm đã đặt hàng khỏi giỏ hàng
+        for (var item in event.items) {
+          try {
+            final cartItemId = item['cartItemId'] as int?;
+            if (cartItemId != null) {
+              await _cartService.removeCartItem(cartItemId);
+            }
+          } catch (e) {
+            // Log lỗi nhưng không làm gián đoạn flow
+            debugPrint('Error removing cart item: $e');
+          }
+        }
+
+        final orders = await _orderService.loadAllOrderByCustomer(
+          AppSession().currentUser!.id,
+        );
         emit(
           OrderLoaded(orders: orders, message: 'Order created successfully'),
         );
@@ -117,27 +138,17 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     }
   }
 
-  Future<void> _onLoadCategories(
+  Future<void> _onLoadAllOrders(
     LoadAllOrders event,
     Emitter<OrderState> emit,
   ) async {
     emit(OrderLoading());
     try {
-      final orders = await _orderService.loadAllOrder();
+      //final orders = await _orderService.loadAllOrder();
+      final orders = await _orderService.loadAllOrderByCustomer(
+        AppSession().currentUser!.id,
+      );
       emit(OrderLoaded(orders: orders));
-    } catch (e) {
-      emit(OrderError(e.toString()));
-    }
-  }
-
-  Future<void> _onLoadDetailOrder(
-    LoadDetailOrder event,
-    Emitter<OrderState> emit,
-  ) async {
-    emit(OrderLoading());
-    try {
-      final order = await _orderService.loadDetailOrder(event.orderId);
-      emit(OrderDetailLoaded(order: order));
     } catch (e) {
       emit(OrderError(e.toString()));
     }

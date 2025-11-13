@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:heaven_book_app/model/promotion.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
+import 'package:heaven_book_app/themes/format_price.dart';
 import 'package:heaven_book_app/widgets/voucher_card_widget.dart';
+import 'package:intl/intl.dart';
 
 class DetailVoucherScreen extends StatefulWidget {
   const DetailVoucherScreen({super.key});
@@ -10,23 +13,111 @@ class DetailVoucherScreen extends StatefulWidget {
 }
 
 class _DetailVoucherScreenState extends State<DetailVoucherScreen> {
+  Promotion? promotion;
+  bool _isInitialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_isInitialized) {
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      if (args != null && args['promotion'] != null) {
+        promotion = args['promotion'] as Promotion;
+      }
+      _isInitialized = true;
+    }
+
+    debugPrint('Promotion in DetailVoucherScreen: $promotion');
+  }
+
+  String _formatDate(String dateString) {
+    try {
+      final date = DateFormat('yyyy-MM-dd').parse(dateString);
+      return DateFormat('dd/MM/yyyy').format(date);
+    } catch (e) {
+      return dateString;
+    }
+  }
+
+  String _getPromotionType() {
+    if (promotion == null) return 'N/A';
+
+    if (promotion!.promotionType.toLowerCase() == 'freeship') {
+      return 'Miễn phí vận chuyển';
+    } else if (promotion!.promotionType.toLowerCase() == 'percent' ||
+        promotion!.promotionType.toLowerCase() == 'percentage') {
+      return 'Giảm theo phần trăm';
+    } else {
+      return 'Giảm giá cố định';
+    }
+  }
+
+  String _getPromotionValue() {
+    if (promotion == null || promotion!.promotionValue == null) return 'N/A';
+
+    if (promotion!.promotionType.toLowerCase() == 'percent' ||
+        promotion!.promotionType.toLowerCase() == 'percentage') {
+      return '${promotion!.promotionValue!.toInt()}%';
+    } else if (promotion!.promotionType.toLowerCase() == 'freeship') {
+      return 'Miễn phí vận chuyển';
+    } else {
+      return FormatPrice.formatPrice(promotion!.promotionValue!);
+    }
+  }
+
+  int _calculateDaysUntilExpiry() {
+    if (promotion?.endDate == null) return 0;
+
+    try {
+      final endDate = DateFormat('yyyy-MM-dd').parse(promotion!.endDate!);
+      final now = DateTime.now();
+      return endDate.difference(now).inDays;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (promotion == null) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back,
+              color: AppColors.primaryDark,
+              size: 30,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            'Chi tiết Voucher',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
+          centerTitle: true,
+        ),
+        body: Center(child: Text('Không tìm thấy thông tin voucher')),
+      );
+    }
+
+    // Format dates
+    String validUntil = 'N/A';
+    if (promotion!.endDate != null) {
+      validUntil = _formatDate(promotion!.endDate!);
+    }
+
+    final daysLeft = _calculateDaysUntilExpiry();
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.primaryDark,
-            size: 30,
-            weight: 100,
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          icon: Icon(Icons.arrow_back, color: AppColors.primaryDark, size: 30),
+          onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Detail Voucher',
+          'Chi tiết Voucher',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -43,7 +134,7 @@ class _DetailVoucherScreenState extends State<DetailVoucherScreen> {
         ),
         child: Stack(
           children: [
-            // Thêm hình tròn lớn màu xanh đậm vào background
+            // Background circle
             Positioned(
               top: -220,
               right: 180,
@@ -52,7 +143,7 @@ class _DetailVoucherScreenState extends State<DetailVoucherScreen> {
                 height: 400,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.primaryDark, // Màu xanh đậm
+                  color: AppColors.primaryDark,
                 ),
               ),
             ),
@@ -64,30 +155,34 @@ class _DetailVoucherScreenState extends State<DetailVoucherScreen> {
                   Padding(
                     padding: const EdgeInsets.only(left: 16.0, right: 16.0),
                     child: VoucherCardWidget(
-                      title: 'Save up to 20k',
-                      minimumOrder: '80k',
-                      points: 2000,
-                      validUntil: '12-12-2015',
-                      type: 'Free Shipping',
+                      title: promotion!.name,
+                      minimumOrder: FormatPrice.formatPrice(
+                        promotion!.orderMinValue ?? 0,
+                      ),
+                      points: 0,
+                      validUntil: validUntil,
+                      type: _getPromotionType(),
                       showRedeemButton: false,
                       hasMargin: false,
                       showPerforation: false,
+                      voucherCode: promotion!.code,
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-                    child: _buildExpiryInfo(),
+                    child: _buildExpiryInfo(daysLeft),
                   ),
                   SizedBox(height: 24),
                   Padding(
                     padding: const EdgeInsets.only(left: 16.0, right: 16.0),
                     child: _buildDetailsSection(),
                   ),
-                  SizedBox(height: 42),
+                  SizedBox(height: 32),
                   Padding(
                     padding: const EdgeInsets.only(left: 16.0, right: 16.0),
                     child: _buildUseNowButton(),
                   ),
+                  SizedBox(height: 62),
                 ],
               ),
             ),
@@ -97,7 +192,7 @@ class _DetailVoucherScreenState extends State<DetailVoucherScreen> {
     );
   }
 
-  Widget _buildExpiryInfo() {
+  Widget _buildExpiryInfo(int daysLeft) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
       margin: EdgeInsets.symmetric(horizontal: 4.0),
@@ -114,11 +209,11 @@ class _DetailVoucherScreenState extends State<DetailVoucherScreen> {
           Icon(Icons.timer_rounded, color: Colors.black54),
           SizedBox(width: 10),
           Text(
-            'Expiry after: 3 days',
+            daysLeft > 0 ? 'Hết hạn sau: $daysLeft ngày' : 'Đã hết hạn',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Colors.black54,
+              color: daysLeft > 0 ? Colors.black54 : Colors.red,
             ),
           ),
         ],
@@ -127,118 +222,169 @@ class _DetailVoucherScreenState extends State<DetailVoucherScreen> {
   }
 
   Widget _buildDetailsSection() {
+    String startDate =
+        promotion!.startDate != null
+            ? _formatDate(promotion!.startDate!)
+            : 'N/A';
+    String endDate =
+        promotion!.endDate != null ? _formatDate(promotion!.endDate!) : 'N/A';
+
+    // Kiểm tra có hiển thị "Giảm tối đa" không
+    bool showMaxDiscount =
+        promotion!.isMaxPromotionValue && promotion!.maxPromotionValue != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Thông tin chính - Grid 2x2 nghiêm ngặt
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Cột trái - luôn có đúng 2 ô
+            Expanded(
+              child: Column(
+                children: [
+                  // Ô 1 cột trái
+                  if (showMaxDiscount)
+                    // Có giảm tối đa: hiện Giá trị giảm
+                    _buildInfoCard(
+                      icon: Icons.discount,
+                      label: 'Giá trị giảm',
+                      value: _getPromotionValue(),
+                    )
+                  else
+                    // Không có giảm tối đa: hiện Mã voucher
+                    _buildInfoCard(
+                      icon: Icons.qr_code_2,
+                      label: 'Mã voucher',
+                      value: promotion!.code,
+                    ),
+                  SizedBox(height: 12),
+                  // Ô 2 cột trái - luôn là Đơn tối thiểu
+                  _buildInfoCard(
+                    icon: Icons.shopping_cart,
+                    label: 'Đơn tối thiểu',
+                    value:
+                        promotion!.orderMinValue != null
+                            ? FormatPrice.formatPrice(promotion!.orderMinValue!)
+                            : 'Không yêu cầu',
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 12),
+            // Cột phải - luôn có đúng 2 ô
+            Expanded(
+              child: Column(
+                children: [
+                  // Ô 1 cột phải - luôn là Loại voucher
+                  _buildInfoCard(
+                    icon: Icons.card_giftcard,
+                    label: 'Loại voucher',
+                    value: _getPromotionType(),
+                  ),
+                  SizedBox(height: 12),
+                  // Ô 2 cột phải
+                  if (showMaxDiscount)
+                    // Có giảm tối đa: hiện Giảm tối đa
+                    _buildInfoCard(
+                      icon: Icons.monetization_on,
+                      label: 'Giảm tối đa',
+                      value: FormatPrice.formatPrice(
+                        promotion!.maxPromotionValue!,
+                      ),
+                    )
+                  else
+                    // Không có giảm tối đa: hiện Giá trị giảm
+                    _buildInfoCard(
+                      icon: Icons.discount,
+                      label: 'Giá trị giảm',
+                      value: _getPromotionValue(),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        SizedBox(height: 16),
+
+        // Thời gian áp dụng - Full width
+        _buildInfoCard(
+          icon: Icons.access_time_rounded,
+          label: 'Thời gian áp dụng',
+          value: 'Từ $startDate đến $endDate',
+          isFullWidth: true,
+        ),
+
+        SizedBox(height: 16),
+
+        // Điều khoản - Full width
+        _buildInfoCard(
+          icon: Icons.receipt_long_outlined,
+          label: 'Điều khoản & Điều kiện',
+          value:
+              (promotion!.note != null && promotion!.note!.isNotEmpty)
+                  ? promotion!.note!
+                  : 'Áp dụng cho tất cả sản phẩm',
+          isFullWidth: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    bool isFullWidth = false,
+  }) {
     return Container(
-      padding: const EdgeInsets.only(
-        top: 32.0,
-        left: 24.0,
-        right: 24.0,
-        bottom: 32.0,
-      ),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black26,
-            blurRadius: 12,
-            offset: Offset(0, 0),
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            spreadRadius: 1,
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailRow(
-            icon: Icons.person_2_outlined,
-            label: 'Usage Limit :',
-            detailWidget: '',
-          ),
           Row(
             children: [
-              SizedBox(
-                width: 200,
-                child: LinearProgressIndicator(
-                  value: 0.4,
-                  borderRadius: BorderRadius.circular(4.0),
-                  backgroundColor: Colors.grey[300],
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.primaryDark,
+              Icon(icon, color: AppColors.primaryDark, size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54,
                   ),
-                  minHeight: 6.0,
                 ),
               ),
-              SizedBox(width: 12.0),
-              Text(
-                '40',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: AppColors.primaryDark,
-                ),
-              ),
-              Text('/100', style: TextStyle(fontSize: 12, color: Colors.black)),
             ],
           ),
-          SizedBox(height: 16.0),
-          _buildDetailRow(
-            icon: Icons.access_time_rounded,
-            label: 'Expiry Date :',
-            detailWidget: 'From 04:00 15-08-2025 to 00:00 20-09-2025',
-          ),
-          SizedBox(height: 16.0),
-          _buildDetailRow(
-            icon: Icons.receipt_long_outlined,
-            label: 'Terms & Conditions :',
-            detailWidget:
-                'Limited uses, hurry before it\'s gone! Get 10% OFF on orders over 800k, up to 300k discount.',
-          ),
-          SizedBox(height: 16.0),
-          _buildDetailRow(
-            icon: Icons.privacy_tip_outlined,
-            label: 'Applicable products :',
-            detailWidget: 'All textbooks and books in the science category',
-          ),
-          SizedBox(height: 16.0),
-          _buildDetailRow(
-            icon: Icons.payment_outlined,
-            label: 'Payment methods :',
-            detailWidget: 'All payment methods',
+          SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.text,
+            ),
+            maxLines: isFullWidth ? null : 2,
+            overflow: isFullWidth ? null : TextOverflow.ellipsis,
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDetailRow({
-    required IconData icon,
-    required String label,
-    required String detailWidget,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: Colors.black87),
-            SizedBox(width: 8.0),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 18.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-        if (detailWidget.isNotEmpty) ...[
-          SizedBox(height: 4.0),
-          Text(
-            detailWidget,
-            style: TextStyle(fontSize: 14.0, color: Colors.black54),
-          ),
-        ],
-      ],
     );
   }
 
@@ -248,7 +394,8 @@ class _DetailVoucherScreenState extends State<DetailVoucherScreen> {
         width: double.infinity,
         child: ElevatedButton(
           onPressed: () {
-            // Handle redeem action
+            // Quay về màn checkout với voucher đã chọn
+            Navigator.pop(context, promotion);
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryDark,
@@ -258,7 +405,7 @@ class _DetailVoucherScreenState extends State<DetailVoucherScreen> {
             ),
           ),
           child: Text(
-            'Use Now',
+            'Sử dụng ngay',
             style: TextStyle(
               color: Colors.white,
               fontSize: 20.0,

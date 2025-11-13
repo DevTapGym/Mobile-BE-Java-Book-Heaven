@@ -197,8 +197,10 @@ class _DetailScreenState extends State<DetailScreen>
 
       // Gộp thumbnail + các ảnh phụ (giống trong phần hiển thị)
       final allImages = [
-        'http://10.0.2.2:8000${book.thumbnail}',
-        ...book.images.map((img) => 'http://10.0.2.2:8000${img.url}'),
+        'http://10.0.2.2:8080/storage/Product/${book.thumbnail}',
+        ...book.images.map(
+          (img) => 'http://10.0.2.2:8080/storage/Product/${img.url}',
+        ),
       ];
 
       if (allImages.isEmpty) return;
@@ -413,9 +415,10 @@ class _DetailScreenState extends State<DetailScreen>
 
                         // Gộp tất cả ảnh (thumbnail + danh sách ảnh phụ)
                         final allImages = [
-                          'http://10.0.2.2:8000${book.thumbnail}',
+                          'http://10.0.2.2:8080/storage/Product/${book.thumbnail}',
                           ...book.images.map(
-                            (img) => 'http://10.0.2.2:8000${img.url}',
+                            (img) =>
+                                'http://10.0.2.2:8080/storage/Product/${img.url}',
                           ),
                         ];
 

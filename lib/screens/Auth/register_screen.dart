@@ -16,6 +16,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
@@ -26,6 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -200,6 +202,66 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             if (value.length < 2) {
                               //return 'Name must be at least 2 characters';
                               return 'Tên phải có ít nhất 2 ký tự chứ';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Phone Number field
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: TextFormField(
+                          controller: _phoneController,
+                          enabled: !_isLoading,
+                          keyboardType: TextInputType.phone,
+                          decoration: InputDecoration(
+                            hintText: 'Số Điện Thoại',
+                            errorStyle: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            hintStyle: const TextStyle(color: AppColors.text),
+                            prefixIcon: const Icon(
+                              Icons.phone,
+                              color: AppColors.primaryDark,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: AppColors.primaryDark,
+                                width: 2,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Vui lòng nhập số điện thoại của bạn';
+                            }
+                            // Vietnamese phone number validation (10 digits, starts with 0)
+                            if (!RegExp(r'^0[0-9]{9}$').hasMatch(value)) {
+                              return 'Số điện thoại không hợp lệ (phải có 10 số và bắt đầu bằng 0)';
                             }
                             return null;
                           },
@@ -431,17 +493,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               _isLoading
                                   ? null
                                   : () {
-                                    if (_formKey.currentState!.validate()) {
-                                      context.read<AuthBloc>().add(
-                                        RegisterRequested(
-                                          name: _nameController.text.trim(),
-                                          email: _emailController.text.trim(),
-                                          password: _passwordController.text,
-                                          passwordConfirmation:
-                                              _confirmPasswordController.text,
+                                    if (!_formKey.currentState!.validate()) {
+                                      return;
+                                    }
+                                    if (_passwordController.text !=
+                                        _confirmPasswordController.text) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Mật khẩu và xác nhận mật khẩu phải giống nhau',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                          duration: Duration(seconds: 2),
                                         ),
                                       );
+                                      return;
                                     }
+
+                                    context.read<AuthBloc>().add(
+                                      RegisterRequested(
+                                        name: _nameController.text.trim(),
+                                        email: _emailController.text.trim(),
+                                        phone: _phoneController.text.trim(),
+                                        password: _passwordController.text,
+                                      ),
+                                    );
                                   },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryDark,

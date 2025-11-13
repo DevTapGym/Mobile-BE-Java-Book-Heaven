@@ -41,32 +41,33 @@ class Order {
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
       id: json['id'],
-      orderNumber: json['order_number'] ?? '',
-      orderDate: DateTime.parse(json['created_at']),
-      shippingFee: double.parse(json['shipping_fee'].toString()),
-      totalAmount: double.parse(json['total_amount'].toString()),
-      receiverName: json['receiver_name'] ?? '',
-      receiverAddress: json['receiver_address'] ?? '',
-      receiverPhone: json['receiver_phone'] ?? '',
-      paymentMethod: json['payment_method'] ?? '',
-      note: json['note'] ?? '',
+      orderNumber: json['code'] ?? '', // đổi từ order_number -> code
+      orderDate: DateTime.parse(
+        json['createdAt'],
+      ), // đổi created_at -> createdAt
+      shippingFee: 0.0, // JSON không có shipping_fee
+      totalAmount: double.parse(
+        json['totalPrice'].toString(),
+      ), // đổi total_amount -> totalPrice
+      receiverName: json['receiverName'] ?? '',
+      receiverAddress: json['receiverAddress'] ?? '',
+      receiverPhone: json['receiverPhone'] ?? '',
+      paymentMethod: json['paymentMethod'] ?? '',
+      note: '', // JSON không có note
       items:
-          (json['order_items'] as List)
+          (json['orderItems'] as List)
               .map((item) => OrderItem.fromJson(item))
-              .toList(),
+              .toList(), // đổi order_items -> orderItems
       statusHistory:
-          (json['status_histories'] as List)
-              .map((status) => StatusOrder.fromJson(status))
-              .toList(),
-      email: json['receiver_email'],
-      customerId: json['customer_id'],
-      isParent:
-          json['has_return'] is bool
-              ? json['has_return']
-              : json['has_return'] == 1,
+          (json['orderShippingEvents'] as List)
+              .map((event) => StatusOrder.fromJson(event['shippingStatus']))
+              .toList(), // đổi status_histories -> orderShippingEvents.shippingStatus
+      email: json['receiverEmail'],
+      customerId: json['customer']?['id'], // đổi customer_id -> customer.id
+      isParent: false, // JSON không có has_return
       totalPromotionValue:
-          json['total_promotion_value'] != null
-              ? double.parse(json['total_promotion_value'].toString())
+          json['totalPromotionValue'] != null
+              ? double.parse(json['totalPromotionValue'].toString())
               : null,
     );
   }

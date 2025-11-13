@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heaven_book_app/bloc/cart/cart_bloc.dart';
 import 'package:heaven_book_app/bloc/cart/cart_event.dart';
 import 'package:heaven_book_app/bloc/cart/cart_state.dart';
+import 'package:heaven_book_app/bloc/user/user_bloc.dart';
+import 'package:heaven_book_app/bloc/user/user_state.dart';
 import 'package:heaven_book_app/model/book.dart';
 import 'package:heaven_book_app/model/cart_item.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
@@ -214,7 +216,12 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<CartBloc>().add(LoadCart());
+    final authState = context.read<UserBloc>().state;
+
+    if (authState is UserLoaded) {
+      final customerID = authState.userData.customer?.id;
+      context.read<CartBloc>().add(LoadCart(customerID!));
+    }
   }
 
   @override
@@ -296,12 +303,12 @@ class _CartScreenState extends State<CartScreen> {
                   CustomCircleCheckbox(
                     value: cartItems.every((item) => item.isSelected),
                     onChanged: (value) {
-                      final List<int> allCartItemIds =
-                          cartItems.map((item) => item.id).toList();
-
-                      context.read<CartBloc>().add(
-                        ToggleAllCartItemSelection(allCartItemIds, value!),
-                      );
+                      setState(() {
+                        // Toggle tất cả items thành true hoặc false
+                        for (var item in cartItems) {
+                          item.isSelected = value!;
+                        }
+                      });
                     },
                   ),
                   SizedBox(width: 8),
@@ -481,10 +488,6 @@ class _CartScreenState extends State<CartScreen> {
                 setState(() {
                   items.isSelected = value!;
                 });
-
-                context.read<CartBloc>().add(
-                  ToggleCartItemSelection(items.id, items.isSelected),
-                );
               },
             ),
             SizedBox(width: 10),
@@ -513,7 +516,7 @@ class _CartScreenState extends State<CartScreen> {
                 child:
                     items.bookThumbnail.isNotEmpty
                         ? Image.network(
-                          'http://10.0.2.2:8000${items.bookThumbnail}',
+                          'http://10.0.2.2:8080/storage/Product/${items.bookThumbnail}',
                           width: 100,
                           height: 160,
                           fit: BoxFit.cover,
@@ -549,6 +552,7 @@ class _CartScreenState extends State<CartScreen> {
               padding: EdgeInsets.symmetric(vertical: 14),
               child: SizedBox(
                 height: 160,
+                width: 240,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -562,10 +566,14 @@ class _CartScreenState extends State<CartScreen> {
                             fontSize: 18,
                             color: Colors.black,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           'by ${items.bookAuthor}',
                           style: TextStyle(color: Colors.black54, fontSize: 15),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           FormatPrice.formatPrice(items.unitPrice),
@@ -850,7 +858,7 @@ class _CartScreenState extends State<CartScreen> {
                     child:
                         book.thumbnail.isNotEmpty
                             ? Image.network(
-                              'http://10.0.2.2:8000${book.thumbnail}',
+                              'http://10.0.2.2:8080/storage/Product/${book.thumbnail}',
                               width: double.infinity,
                               height: 170,
                               fit: BoxFit.cover,
@@ -930,6 +938,7 @@ class _CartScreenState extends State<CartScreen> {
                     Text(
                       'by ${book.author}',
                       style: TextStyle(fontSize: 14, color: Colors.black54),
+                      maxLines: 1,
                     ),
                     const Spacer(),
                     Row(

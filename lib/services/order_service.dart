@@ -74,44 +74,50 @@ class OrderService {
   }
 
   Future<bool> createOrder({
-    required String note,
-    required String paymentMethod,
-    required String phone,
-    required String address,
     required String name,
-    required List<Map<String, dynamic>> items, // thêm items
+    required String address,
+    required String phone,
+    required String paymentMethod,
+    required int customerId,
+    int? promotionId,
+    required List<Map<String, dynamic>> items,
   }) async {
     try {
+      final body = {
+        'receiverName': name,
+        'receiverAddress': address,
+        'receiverPhone': phone,
+        'paymentMethod': paymentMethod,
+        'customerId': customerId,
+        'promotionId': promotionId,
+        'orderItems': items,
+        'statusShipping': 'wait_confirm',
+      };
+
+      debugPrint('Creating order with body: $body');
+
       final response = await apiClient.privateDio.post(
         '/order/create',
-        data: {
-          'note': note,
-          'payment_method': paymentMethod,
-          'phone': phone,
-          'address': address,
-          'name': name,
-          'items': items, // truyền list items
-        },
+        data: body,
       );
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 201 || response.statusCode == 200) {
         debugPrint('✅ Order created successfully');
         return true;
       } else {
-        throw Exception('Failed to create order: ${response.data['message']}');
+        throw Exception(
+          '❌ Failed to create order: ${response.data['message']}',
+        );
       }
     } on DioException catch (dioError) {
       debugPrint('❌ DioException khi tạo đơn hàng: ${dioError.message}');
-
       if (dioError.response != null) {
         debugPrint('Status code: ${dioError.response?.statusCode}');
         debugPrint('Data: ${dioError.response?.data}');
-        debugPrint('Headers: ${dioError.response?.headers}');
       }
       final msg =
           dioError.response?.data?['message'] ?? 'Lỗi kết nối đến server';
-      debugPrint('Chi tiết lỗi: $msg');
-      throw msg; // 👉 chỉ ném chuỗi lỗi, không bọc trong Exception
+      throw msg;
     } catch (e) {
       debugPrint('Error creating order: $e');
       throw Exception('Lỗi tạo đơn hàng: $e');
@@ -174,12 +180,28 @@ class OrderService {
 
   Future<List<Order>> loadAllOrder() async {
     try {
-      final response = await apiClient.privateDio.get('/order/user');
+      final response = await apiClient.privateDio.get('/order');
       final data = response.data['data'];
       final resultList = data['result'] as List;
 
       final orders =
           resultList.map((orderJson) => Order.fromJson(orderJson)).toList();
+
+      return orders;
+    } catch (e) {
+      debugPrint('Error loading orders: $e');
+      throw Exception('Error loading orders: $e');
+    }
+  }
+
+  Future<List<Order>> loadAllOrderByCustomer(int userId) async {
+    try {
+      final response = await apiClient.privateDio.get('/order/history/$userId');
+      final data = response.data['data'] as List;
+      //final resultList = data['result'] as List;
+
+      final orders =
+          data.map((orderJson) => Order.fromJson(orderJson)).toList();
 
       return orders;
     } catch (e) {

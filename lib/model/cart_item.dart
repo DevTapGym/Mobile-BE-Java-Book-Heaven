@@ -28,19 +28,22 @@ class CartItem {
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
+    final product = json['product'] ?? {};
+    final category = product['category'] ?? {};
+
     return CartItem(
       id: json['id'],
-      bookId: json['book_id'],
-      categoryId: json['category_id'],
-      bookName: json['book_name'],
-      bookAuthor: json['book_author'],
-      bookThumbnail: json['book_thumbnail'],
-      unitPrice: double.tryParse(json['unit_price']?.toString() ?? '') ?? 0.0,
-      totalPrice: double.tryParse(json['total_price']?.toString() ?? '') ?? 0.0,
-      quantity: json['quantity'],
-      inStock: json['in_stock'],
-      sale: double.tryParse(json['sale']?.toString() ?? '') ?? 0.0,
-      isSelected: json['is_selected'] ?? false,
+      bookId: product['id'],
+      categoryId: category['id'] ?? 0,
+      bookName: product['name'] ?? '',
+      bookAuthor: product['author'] ?? '',
+      bookThumbnail: product['thumbnail'] ?? '',
+      unitPrice: double.tryParse(product['price']?.toString() ?? '0') ?? 0.0,
+      totalPrice: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+      quantity: json['quantity'] ?? 0,
+      inStock: product['quantity'] ?? 0,
+      sale: 0.0, // nếu sau này backend có thêm trường giảm giá thì sửa chỗ này
+      isSelected: false,
     );
   }
 }

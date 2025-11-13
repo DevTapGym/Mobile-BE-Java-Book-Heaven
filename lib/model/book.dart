@@ -13,7 +13,7 @@ class Book {
   final int sold;
   final double saleOff;
   final bool isActive;
-  final List<Category> categories;
+  final Category categories;
   final List<BookImage> images;
   final List<BookFeature> features;
 
@@ -28,7 +28,7 @@ class Book {
     required this.saleOff,
     required this.isActive,
     this.description,
-    this.categories = const [],
+    required this.categories,
     this.images = const [],
     this.features = const [],
   });
@@ -36,26 +36,34 @@ class Book {
   factory Book.fromJson(Map<String, dynamic> json) {
     return Book(
       id: json['id'],
-      title: json['title'] ?? '',
+      title: json['title'] ?? json['name'] ?? '',
       description: json['description'],
       thumbnail: json['thumbnail'] ?? '',
       author: json['author'] ?? '',
       price: double.tryParse(json['price'].toString()) ?? 0.0,
       quantity: json['quantity'] ?? 0,
       sold: json['sold'] ?? 0,
-      saleOff: double.tryParse(json['sale_off'].toString()) ?? 0.0,
-      isActive: json['is_active'] == 1,
+      saleOff:
+          double.tryParse(
+            json['sale_off']?.toString() ?? json['saleOff']?.toString() ?? '0',
+          ) ??
+          0.0,
+      isActive: json['isDeleted'] == 0,
 
+      // Xử lý category - BE trả về 'category' (object)
       categories:
-          (json['categories'] as List?)
-              ?.map((e) => Category.fromJson(Map<String, dynamic>.from(e)))
-              .toList() ??
-          [],
+          json['category'] != null
+              ? Category.fromJson(Map<String, dynamic>.from(json['category']))
+              : Category(id: 0, name: 'Unknown'),
+
+      // Xử lý images - BE trả về 'productImages' (array)
       images:
-          (json['book_images'] as List?)
-              ?.map((e) => BookImage.fromJson(Map<String, dynamic>.from(e)))
-              .toList() ??
-          [],
+          json['productImages'] != null
+              ? (json['productImages'] as List)
+                  .map((e) => BookImage.fromJson(Map<String, dynamic>.from(e)))
+                  .toList()
+              : [],
+
       features:
           (json['bookfeatures'] as List?)
               ?.map((e) => BookFeature.fromJson(Map<String, dynamic>.from(e)))

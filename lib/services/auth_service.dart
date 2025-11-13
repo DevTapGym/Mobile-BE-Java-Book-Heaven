@@ -129,24 +129,27 @@ class AuthService {
     }
   }
 
-  Future<User> uploadAvatar(File imageFile) async {
+  Future<String> uploadAvatar(File imageFile) async {
     try {
       final formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(
+        'file': await MultipartFile.fromFile(
           imageFile.path,
           filename: imageFile.path.split('/').last,
         ),
+        'folder': 'avatar',
       });
 
       final response = await apiClient.privateDio.post(
-        '/upload/avatar',
+        '/files',
         data: formData,
       );
 
       if (response.statusCode == 200 && response.data['data'] != null) {
         debugPrint('Upload avatar thành công');
-        final userJson = response.data['data'];
-        return User.fromJson(userJson);
+
+        // Lấy tên file từ phản hồi
+        final fileName = response.data['data']['fileName'];
+        return fileName;
       } else {
         final message = response.data['message'] ?? 'Upload avatar thất bại';
         final error = response.data['error'];
@@ -167,29 +170,92 @@ class AuthService {
   }
 
   Future<bool> updateInfoUser(
+    int id, {
+    String? name,
+    String? phone,
+    String? avatar,
+    String? email,
+  }) async {
+    try {
+      final Map<String, dynamic> data = {
+        'id': id,
+        'role': {'id': 2, 'name': 'CUSTOMER'},
+      };
+      if (name != null && name.isNotEmpty) {
+        data['username'] = name;
+      }
+      if (phone != null && phone.isNotEmpty) {
+        data['phone'] = phone;
+      }
+      if (avatar != null && avatar.isNotEmpty) {
+        data['avatar'] = avatar;
+      }
+      if (email != null && email.isNotEmpty) {
+        data['email'] = email;
+      }
+
+      if (data.isEmpty) {
+        throw Exception('Không có thông tin nào để cập nhật.');
+      }
+
+      final response = await apiClient.privateDio.put('/account', data: data);
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ Cập nhật thông tin người dùng thành công');
+        return true;
+      } else {
+        final message = response.data['message'] ?? 'Cập nhật thất bại';
+        final error = response.data['error'];
+        throw Exception(error != null ? '$message: $error' : message);
+      }
+    } on DioException catch (dioError) {
+      debugPrint('❌ DioException khi cập nhật thông tin người dùng:');
+      if (dioError.response != null) {
+        debugPrint('Status code: ${dioError.response?.statusCode}');
+        debugPrint('Data: ${dioError.response?.data}');
+        debugPrint('Headers: ${dioError.response?.headers}');
+      } else {
+        debugPrint('Message: ${dioError.message}');
+      }
+      throw Exception(
+        dioError.response?.data['message'] ??
+            'Không thể kết nối đến server. Vui lòng thử lại.',
+      );
+    } catch (e, stack) {
+      debugPrint('❌ Lỗi không xác định khi cập nhật thông tin: $e');
+      debugPrint('❌ Stacktrace: $stack');
+      throw Exception('Đã xảy ra lỗi không xác định: $e');
+    }
+  }
+
+  Future<bool> updateCustomer(
+    int id,
     String name,
-    String dateOfBirth,
     String phone,
+    String email,
+    String birthday,
     String gender,
   ) async {
     try {
       final response = await apiClient.privateDio.put(
-        '/auth/edit-profile',
+        '/customer',
         data: {
+          "id": id,
           "name": name,
-          "date_of_birth": dateOfBirth,
+          "birthday": birthday,
+          "email": email,
           "phone": phone,
           "gender": gender,
         },
       );
 
       if (response.statusCode == 200 && response.data['data'] != null) {
-        debugPrint('✅ Cập nhật thông tin người dùng thành công');
+        debugPrint('✅ Cập nhật thông tin khách hàng thành công');
         return true;
       } else {
         final message = response.data['message'] ?? 'Cập nhật thất bại';
         final error = response.data['error'];
-        debugPrint('⚠️ Update user info failed: $message');
+        debugPrint('⚠️ Cập nhật thông tin khách hàng thất bại: $message');
         throw Exception(error != null ? '$message: $error' : message);
       }
     } on DioException catch (dioError) {
@@ -215,15 +281,15 @@ class AuthService {
   Future<bool> changePassword(
     String currentPassword,
     String newPassword,
-    String newPasswordConfirmation,
+    String email,
   ) async {
     try {
-      final response = await apiClient.privateDio.put(
-        '/auth/change-password',
+      final response = await apiClient.privateDio.post(
+        '/account/change-password',
         data: {
-          "current_password": currentPassword,
-          "new_password": newPassword,
-          "new_password_confirmation": newPasswordConfirmation,
+          "email": email,
+          "oldPassword": currentPassword,
+          "newPassword": newPassword,
         },
       );
 
@@ -245,10 +311,12 @@ class AuthService {
 
   Future<User> getCurrentUser() async {
     try {
-      final response = await apiClient.privateDio.get('/auth/me');
+      final response = await apiClient.privateDio.get('/auth/account');
 
-      if (response.statusCode == 200 && response.data['data'] != null) {
-        final userJson = response.data['data'];
+      if (response.statusCode == 200 &&
+          response.data['data'] != null &&
+          response.data['data']['account'] != null) {
+        final userJson = response.data['data']['account'];
         return User.fromJson(userJson);
       } else {
         throw Exception('Không thể lấy thông tin người dùng');
@@ -264,23 +332,22 @@ class AuthService {
   }
 
   // ==================== LOGIN ====================
-  Future<Map<String, dynamic>> login(String email, String password) async {
+  Future<String> login(String username, String password) async {
     try {
       final response = await apiClient.publicDio.post(
         '/auth/login',
-        data: {"email": email, "password": password},
+        data: {"username": username, "password": password},
       );
 
       if (response.statusCode == 200 && response.data['data'] != null) {
         final data = response.data['data'];
+        final accessToken = data['access_token'];
 
-        // Lưu access token
-        await _secureStorage.write(
-          key: 'access_token',
-          value: data['access_token'],
-        );
+        if (accessToken == null || accessToken.isEmpty) {
+          throw Exception('Không tìm thấy access_token trong phản hồi');
+        }
+        await _secureStorage.write(key: 'access_token', value: accessToken);
 
-        // Lưu refresh token từ header (Set-Cookie)
         final setCookieHeader = response.headers['set-cookie'];
         if (setCookieHeader != null && setCookieHeader.isNotEmpty) {
           final refreshCookie = setCookieHeader
@@ -295,26 +362,10 @@ class AuthService {
               key: 'refresh_token',
               value: refreshCookie.value,
             );
-            debugPrint('Refresh token đã lưu trong SecureStorage');
-          } else {
-            throw Exception('Không tìm thấy refresh_token trong header');
           }
         }
 
-        // Lưu trạng thái user
-        final userData = data['account'] ?? {};
-        final isActiveValue = userData['is_active'] ?? false;
-        await _secureStorage.write(
-          key: 'is_active',
-          value: isActiveValue.toString(),
-        );
-
-        final isActive = userData['is_active'] == true;
-        return {
-          'token': data['access_token'],
-          'user': userData,
-          'isActive': isActive,
-        };
+        return accessToken;
       } else {
         throw Exception(response.data['message'] ?? 'Đăng nhập thất bại');
       }
@@ -372,12 +423,7 @@ class AuthService {
           }
         }
 
-        return {
-          'token': newAccessToken,
-          'user': data['user'] ?? {},
-          'isActive': (data['user']?['is_active'] ?? false) == true,
-          'success': true,
-        };
+        return {'token': newAccessToken, 'success': true};
       } else {
         throw Exception('Làm mới token thất bại');
       }
@@ -440,7 +486,7 @@ class AuthService {
     required String name,
     required String email,
     required String password,
-    required String passwordConfirmation,
+    required String phone,
   }) async {
     try {
       final response = await apiClient.publicDio.post(
@@ -449,20 +495,18 @@ class AuthService {
           "username": name,
           "email": email,
           "password": password,
-          "password_confirmation": passwordConfirmation,
+          "phone": phone,
         },
       );
 
       if (response.statusCode == 201) {
         final data = response.data['data'];
-        final isActive = data['is_active'] ?? false;
 
         return {
           'success': true,
           'status': response.data['status'],
           'message': response.data['message'] ?? 'Đăng ký thành công',
           'user': data,
-          'isActive': isActive,
         };
       } else {
         throw Exception(response.data['message'] ?? 'Đăng ký thất bại');

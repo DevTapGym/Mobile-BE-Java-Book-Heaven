@@ -18,11 +18,11 @@ class StatusOrder {
   factory StatusOrder.fromJson(Map<String, dynamic> json) {
     return StatusOrder(
       id: json['id'],
-      name: json['status_name'],
-      description: json['description'] ?? '',
-      sequence: json['status_sequence'] ?? 0,
+      name: json['status'] ?? '', // đổi status_name -> status
+      description: json['label'] ?? '', // đổi description -> label
+      sequence: 0, // JSON không có thứ tự
       note: json['note'] ?? '',
-      timestamp: DateTime.parse(json['created_at']),
+      timestamp: DateTime.now(), // JSON không có created_at
     );
   }
 }

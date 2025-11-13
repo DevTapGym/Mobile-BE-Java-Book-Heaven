@@ -46,12 +46,17 @@ class _OrdersScreenState extends State<OrdersScreen>
   }
 
   List<Order> getOrdersByStatus(String status) {
-    return _filteredOrders.where((order) {
-      if (order.statusHistory.isEmpty) return false;
-      // Lấy trạng thái mới nhất
-      final latestStatus = order.statusHistory.last.name.toLowerCase();
-      return latestStatus == status.toLowerCase();
-    }).toList();
+    final orders =
+        _filteredOrders.where((order) {
+          if (order.statusHistory.isEmpty) return false;
+          // Lấy trạng thái mới nhất
+          final latestStatus = order.statusHistory.last.name.toLowerCase();
+          return latestStatus == status.toLowerCase();
+        }).toList();
+
+    // Sắp xếp từ mới nhất đến cũ nhất
+    orders.sort((a, b) => b.orderDate.compareTo(a.orderDate));
+    return orders;
   }
 
   List<Order> _getOrdersForTab(String tab) {
@@ -71,7 +76,10 @@ class _OrdersScreenState extends State<OrdersScreen>
       case 'Completed':
         return getOrdersByStatus('completed');
       default:
-        return _filteredOrders;
+        // Sắp xếp tất cả đơn hàng từ mới nhất đến cũ nhất
+        final allOrders = List<Order>.from(_filteredOrders);
+        allOrders.sort((a, b) => b.orderDate.compareTo(a.orderDate));
+        return allOrders;
     }
   }
 
@@ -513,32 +521,43 @@ class _OrdersScreenState extends State<OrdersScreen>
               orderDateOnly.isAtSameMomentAs(endDate) ||
               (orderDateOnly.isAfter(startDate) &&
                   orderDateOnly.isBefore(endDate));
-
-          if (isInRange) {
-            debugPrint(
-              '  ✅ Order ${order.orderNumber} - ${orderDateOnly.toString().split(' ')[0]} (included)',
-            );
-          } else {
-            debugPrint(
-              '  ❌ Order ${order.orderNumber} - ${orderDateOnly.toString().split(' ')[0]} (excluded)',
-            );
-          }
-
           return isInRange;
         }).toList();
-
-    debugPrint(
-      '📈 Filter result: ${filteredOrders.length}/${orders.length} orders match criteria',
-    );
     return filteredOrders;
   }
 
   void _clearDateFilter() {
-    debugPrint('🗑️ Clearing date filter...');
     setState(() {
       _selectedDateRange = null;
     });
-    debugPrint('✅ Date filter cleared - showing all orders');
+  }
+
+  // Kiểm tra xem đơn hàng đã có đơn trả hàng hay chưa
+  bool _hasReturnOrder(String orderNumber) {
+    final returnOrderCode = '$orderNumber-TH01';
+    return _filteredOrders.any((order) => order.orderNumber == returnOrderCode);
+  }
+
+  // Chuyển đổi trạng thái từ tiếng Anh sang tiếng Việt
+  String _getVietnameseStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'wait_confirm':
+        return 'Chờ xác nhận';
+      case 'processing':
+        return 'Đang xử lý';
+      case 'shipping':
+        return 'Đang giao';
+      case 'payment_completed':
+        return 'Đã thanh toán';
+      case 'completed':
+        return 'Hoàn thành';
+      case 'canceled':
+        return 'Đã hủy';
+      case 'returned':
+        return 'Đã trả hàng';
+      default:
+        return status.replaceAll('_', ' ');
+    }
   }
 
   void _showCancelOrderBottomSheet(Order order) {
@@ -853,14 +872,6 @@ class _OrdersScreenState extends State<OrdersScreen>
                     orderId: order.id,
                     statusId: 5,
                     note: reason,
-                  ),
-                );
-                // Hiển thị thông báo
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Đang hủy đơn hàng...'),
-                    backgroundColor: AppColors.primary,
-                    duration: Duration(seconds: 2),
                   ),
                 );
               },
@@ -2175,7 +2186,7 @@ class _OrdersScreenState extends State<OrdersScreen>
                       Navigator.pushNamed(
                         context,
                         '/detail-order',
-                        arguments: {'orderId': order.id},
+                        arguments: {'order': order},
                       );
                     },
                     style: OutlinedButton.styleFrom(
@@ -2262,21 +2273,30 @@ class _OrdersScreenState extends State<OrdersScreen>
                   Expanded(
                     child: ElevatedButton(
                       onPressed:
-                          order.isParent == false
+                          (order.isParent == false &&
+                                  !_hasReturnOrder(order.orderNumber))
                               ? () {
                                 _showReturnOrderDialog(order);
                               }
                               : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange,
+                        disabledBackgroundColor: Colors.grey[300],
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         //'Return Order',
-                        'Trả hàng',
-                        style: TextStyle(color: Colors.white),
+                        _hasReturnOrder(order.orderNumber)
+                            ? 'Đã trả hàng'
+                            : 'Trả hàng',
+                        style: TextStyle(
+                          color:
+                              _hasReturnOrder(order.orderNumber)
+                                  ? Colors.grey[600]
+                                  : Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -2307,7 +2327,36 @@ class _OrdersScreenState extends State<OrdersScreen>
                 ),
               ],
             ),
-            child: const Icon(Icons.book, color: AppColors.primary),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child:
+                  item.bookThumbnail.isNotEmpty
+                      ? Image.network(
+                        'http://10.0.2.2:8080/storage/product/${item.bookThumbnail}',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.book,
+                            color: AppColors.primary,
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value:
+                                  loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                              strokeWidth: 2,
+                              color: AppColors.primary,
+                            ),
+                          );
+                        },
+                      )
+                      : const Icon(Icons.book, color: AppColors.primary),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -2323,7 +2372,7 @@ class _OrdersScreenState extends State<OrdersScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Qty: ${item.quantity} x ${FormatPrice.formatPrice(item.unitPrice)}',
+                  'SL: ${item.quantity} x ${FormatPrice.formatPrice(item.unitPrice)}',
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
@@ -2370,7 +2419,7 @@ class _OrdersScreenState extends State<OrdersScreen>
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
-        status == "payment_completed" ? "paid" : status.replaceAll('_', ' '),
+        _getVietnameseStatus(status),
         style: TextStyle(
           color: textColor,
           fontSize: 12,

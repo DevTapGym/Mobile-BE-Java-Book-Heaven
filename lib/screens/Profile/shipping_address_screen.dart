@@ -112,7 +112,7 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
                                   vertical: 4,
                                 ),
                                 child: DropdownButtonFormField<int>(
-                                  value: selectedTagId,
+                                  initialValue: selectedTagId,
                                   decoration: InputDecoration(
                                     //labelText: 'Address Tag',
                                     labelText: 'Tên địa chỉ',
@@ -241,7 +241,7 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
                                           tempIsDefault = value;
                                         });
                                       },
-                                      activeColor: AppColors.primaryDark,
+                                      activeThumbColor: AppColors.primaryDark,
                                     );
                                   },
                                 ),

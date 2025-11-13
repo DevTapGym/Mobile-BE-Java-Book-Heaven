@@ -1,65 +1,57 @@
+import 'customer.dart';
+
 class User {
+  final int id;
   final String name;
   final String email;
   final String? phone;
   final String? avatarUrl;
-  final String? gender;
-  final DateTime? dateOfBirth;
-  final bool isActive;
+  final String? role;
+  final Customer? customer;
 
   User({
+    required this.id,
     required this.email,
-    required this.isActive,
     required this.name,
+    this.role,
     this.phone,
     this.avatarUrl,
-    this.gender,
-    this.dateOfBirth,
+    this.customer,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      name: json['name'],
-      isActive: (json['is_active'] ?? 0) == 1,
-      email: json['email'],
+      id: json['id'],
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
       phone: json['phone'],
       avatarUrl: json['avatar'],
-      gender: json['gender'],
-      dateOfBirth:
-          json['date_of_birth'] != null
-              ? DateTime.parse(json['date_of_birth'])
-              : null,
+      role: json['role'] ?? '',
+      customer:
+          json['customer'] != null ? Customer.fromJson(json['customer']) : null,
     );
   }
 
   User copyWith({
-    User? user,
     String? name,
     String? email,
     String? phone,
     String? avatarUrl,
     String? gender,
-    String? dateOfBirth,
-    bool? isActive,
+    Customer? customer,
   }) {
-    final source = user ?? this;
-
     return User(
-      name: name ?? source.name,
-      email: email ?? source.email,
-      phone: phone ?? source.phone,
-      avatarUrl: avatarUrl ?? source.avatarUrl,
-      gender: gender ?? source.gender,
-      dateOfBirth:
-          dateOfBirth != null
-              ? DateTime.parse(dateOfBirth)
-              : source.dateOfBirth,
-      isActive: isActive ?? source.isActive,
+      id: id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      customer: customer ?? this.customer,
     );
   }
 
   @override
   String toString() {
-    return 'User{name: $name, email: $email, phone: $phone, avatarUrl: $avatarUrl, gender: $gender, dateOfBirth: $dateOfBirth, isActive: $isActive}';
+    return 'User{id: $id, name: $name, email: $email, phone: $phone, avatarUrl: $avatarUrl, role: $role, customer: $customer}';
   }
 }

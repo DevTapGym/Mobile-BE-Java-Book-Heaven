@@ -17,16 +17,22 @@ class BookBloc extends Bloc<BookEvent, BookState> {
   Future<void> _onLoadBooks(LoadBooks event, Emitter<BookState> emit) async {
     emit(BookLoading());
     try {
-      final popularBooks = await bookService.getPopularBooks();
-      final saleOffBooks = await bookService.getSaleOffBooks();
+      // final popularBooks = await bookService.getPopularBooks();
+      // final saleOffBooks = await bookService.getSaleOffBooks();
       final bestSellingBooks = await bookService.getBestSellingBooksInYear();
-      final bannerBooks = await bookService.getBannerBooks();
-      final randomBooks = await bookService.getRandomBooks();
+      // final bannerBooks = await bookService.getBannerBooks();
+      // final randomBooks = await bookService.getRandomBooks();
+
+      final popularBooks = await bookService.getAllBooks();
+      final saleOffBooks = await bookService.getAllBooks();
+      //final bestSellingBooks = await bookService.getAllBooks();
+      final bannerBooks = await bookService.getAllBooks();
+      final randomBooks = await bookService.getAllBooks();
       emit(
         BookLoaded(
           popularBooks: popularBooks,
           saleOffBooks: saleOffBooks,
-          bestSellingBooks: bestSellingBooks,
+          bestSellingBooks: bestSellingBooks.take(3).toList(),
           bannerBooks: bannerBooks,
           randomBooks: randomBooks,
         ),
@@ -56,7 +62,7 @@ class BookBloc extends Bloc<BookEvent, BookState> {
     emit(BookLoading());
     try {
       final categoryBooks = await bookService.getBooksByCategory(
-        event.categoryId,
+        event.categoryName,
       );
       emit(BookCategoryLoaded(categoryBooks));
     } catch (e) {
@@ -85,10 +91,9 @@ class BookBloc extends Bloc<BookEvent, BookState> {
     try {
       final bookDetail = await bookService.getBookDetail(event.id);
       final relatedBooks = await bookService.getBooksByCategory(
-        bookDetail.categories.first.id,
+        bookDetail.categories.name,
       );
-      relatedBooks.removeWhere((book) => book.id == bookDetail.id);
-
+      //relatedBooks.removeWhere((book) => book.id == bookDetail.id);
       emit(BookDetailLoaded(book: bookDetail, relatedBooks: relatedBooks));
     } catch (e) {
       emit(BookError(e.toString()));
