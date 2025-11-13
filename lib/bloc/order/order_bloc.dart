@@ -1,13 +1,16 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heaven_book_app/bloc/order/order_event.dart';
 import 'package:heaven_book_app/bloc/order/order_state.dart';
 import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/services/order_service.dart';
+import 'package:heaven_book_app/services/cart_service.dart';
 
 class OrderBloc extends Bloc<OrderEvent, OrderState> {
   final OrderService _orderService;
+  final CartService _cartService;
 
-  OrderBloc(this._orderService) : super(OrderInitial()) {
+  OrderBloc(this._orderService, this._cartService) : super(OrderInitial()) {
     on<LoadAllOrders>(_onLoadAllOrders);
     on<LoadDetailOrder>(_onLoadDetailOrder);
     on<PlaceOrder>(_onPlaceOrder);
@@ -86,8 +89,25 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         promotionId: event.promotionId,
       );
       if (success) {
-        //final orders = await _orderService.loadAllOrder();
-        emit(OrderLoaded(orders: [], message: 'Order created successfully'));
+        // Xóa các sản phẩm đã đặt hàng khỏi giỏ hàng
+        for (var item in event.items) {
+          try {
+            final cartItemId = item['cartItemId'] as int?;
+            if (cartItemId != null) {
+              await _cartService.removeCartItem(cartItemId);
+            }
+          } catch (e) {
+            // Log lỗi nhưng không làm gián đoạn flow
+            debugPrint('Error removing cart item: $e');
+          }
+        }
+
+        final orders = await _orderService.loadAllOrderByCustomer(
+          AppSession().currentUser!.id,
+        );
+        emit(
+          OrderLoaded(orders: orders, message: 'Order created successfully'),
+        );
       } else {
         emit(OrderError('Failed to create order'));
       }

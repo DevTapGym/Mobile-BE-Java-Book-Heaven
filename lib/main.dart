@@ -79,7 +79,9 @@ Future<void> main() async {
         BlocProvider<AddressBloc>(
           create: (_) => AddressBloc(addressService)..add(LoadAddresses()),
         ),
-        BlocProvider<OrderBloc>(create: (_) => OrderBloc(orderService)),
+        BlocProvider<OrderBloc>(
+          create: (_) => OrderBloc(orderService, cartRepository),
+        ),
         BlocProvider<PaymentBloc>(create: (_) => PaymentBloc(paymentService)),
         BlocProvider<PromotionBloc>(
           create: (_) => PromotionBloc(promotionService),

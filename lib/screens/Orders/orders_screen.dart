@@ -524,6 +524,34 @@ class _OrdersScreenState extends State<OrdersScreen>
     });
   }
 
+  // Kiểm tra xem đơn hàng đã có đơn trả hàng hay chưa
+  bool _hasReturnOrder(String orderNumber) {
+    final returnOrderCode = '$orderNumber-TH01';
+    return _filteredOrders.any((order) => order.orderNumber == returnOrderCode);
+  }
+
+  // Chuyển đổi trạng thái từ tiếng Anh sang tiếng Việt
+  String _getVietnameseStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'wait_confirm':
+        return 'Chờ xác nhận';
+      case 'processing':
+        return 'Đang xử lý';
+      case 'shipping':
+        return 'Đang giao';
+      case 'payment_completed':
+        return 'Đã thanh toán';
+      case 'completed':
+        return 'Hoàn thành';
+      case 'canceled':
+        return 'Đã hủy';
+      case 'returned':
+        return 'Đã trả hàng';
+      default:
+        return status.replaceAll('_', ' ');
+    }
+  }
+
   void _showCancelOrderBottomSheet(Order order) {
     String? selectedReason;
     String customReason = '';
@@ -2237,21 +2265,30 @@ class _OrdersScreenState extends State<OrdersScreen>
                   Expanded(
                     child: ElevatedButton(
                       onPressed:
-                          order.isParent == false
+                          (order.isParent == false &&
+                                  !_hasReturnOrder(order.orderNumber))
                               ? () {
                                 _showReturnOrderDialog(order);
                               }
                               : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange,
+                        disabledBackgroundColor: Colors.grey[300],
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         //'Return Order',
-                        'Trả hàng',
-                        style: TextStyle(color: Colors.white),
+                        _hasReturnOrder(order.orderNumber)
+                            ? 'Đã trả hàng'
+                            : 'Trả hàng',
+                        style: TextStyle(
+                          color:
+                              _hasReturnOrder(order.orderNumber)
+                                  ? Colors.grey[600]
+                                  : Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -2374,7 +2411,7 @@ class _OrdersScreenState extends State<OrdersScreen>
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
-        status == "payment_completed" ? "paid" : status.replaceAll('_', ' '),
+        _getVietnameseStatus(status),
         style: TextStyle(
           color: textColor,
           fontSize: 12,

@@ -1841,6 +1841,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                           return {
                                             'productId': item.bookId,
                                             'quantity': item.quantity,
+                                            'cartItemId': item.id,
                                           };
                                         }).toList();
 

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/services/book_service.dart';
 import 'cart_event.dart';
 import 'cart_state.dart';
@@ -18,7 +19,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   Future<void> _onLoadCart(LoadCart event, Emitter<CartState> emit) async {
     emit(CartLoading());
     try {
-      final cart = await _cartService.getMyCart(1);
+      final cart = await _cartService.getMyCart(
+        AppSession().currentUser!.customer!.id,
+      );
       final relatedBooks = await _bookService.getAllBooks();
 
       emit(CartLoaded(cart: cart, relatedBooks: relatedBooks));
