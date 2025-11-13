@@ -95,12 +95,3 @@ class PlaceOrder extends OrderEvent {
     name,
   ];
 }
-
-class LoadDetailOrder extends OrderEvent {
-  final int orderId;
-
-  LoadDetailOrder({required this.orderId});
-
-  @override
-  List<Object?> get props => [orderId];
-}

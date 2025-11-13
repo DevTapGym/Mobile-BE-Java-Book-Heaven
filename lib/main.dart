@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:heaven_book_app/bloc/promotion/promotion_event.dart';
 import 'package:heaven_book_app/bloc/user/user_event.dart';
 import 'firebase_options.dart';
-import 'package:heaven_book_app/bloc/address/address_bloc.dart';
-import 'package:heaven_book_app/bloc/address/address_event.dart';
 import 'package:heaven_book_app/bloc/auth/auth_bloc.dart';
 import 'package:heaven_book_app/bloc/auth/auth_state.dart';
 import 'package:heaven_book_app/bloc/book/book_bloc.dart';
@@ -13,7 +12,6 @@ import 'package:heaven_book_app/bloc/book/book_event.dart';
 import 'package:heaven_book_app/bloc/cart/cart_bloc.dart';
 import 'package:heaven_book_app/bloc/cart/cart_state.dart';
 import 'package:heaven_book_app/bloc/order/order_bloc.dart';
-import 'package:heaven_book_app/bloc/payment/payment_bloc.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_bloc.dart';
 import 'package:heaven_book_app/screens/Orders/buy_now_screen.dart';
@@ -40,11 +38,9 @@ import 'package:heaven_book_app/screens/Profile/edit_profile_screen.dart';
 import 'package:heaven_book_app/screens/Profile/profile_screen.dart';
 import 'package:heaven_book_app/screens/Profile/reward_screen.dart';
 import 'package:heaven_book_app/screens/Profile/shipping_address_screen.dart';
-import 'package:heaven_book_app/services/address_service.dart';
 import 'package:heaven_book_app/services/api_client.dart';
 import 'package:heaven_book_app/services/auth_service.dart';
 import 'package:heaven_book_app/services/order_service.dart';
-import 'package:heaven_book_app/services/payment_service.dart';
 import 'package:heaven_book_app/services/promotion_service.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
 import 'screens/Auth/onboarding_wrapper.dart';
@@ -58,9 +54,7 @@ Future<void> main() async {
 
   final cartRepository = CartService(apiClient, authService);
   final bookRepository = BookService(apiClient);
-  final addressService = AddressService(apiClient);
   final orderService = OrderService(apiClient);
-  final paymentService = PaymentService(apiClient);
   final promotionService = PromotionService(apiClient);
 
   runApp(
@@ -76,15 +70,11 @@ Future<void> main() async {
         BlocProvider<CartBloc>(
           create: (_) => CartBloc(cartRepository, bookRepository),
         ),
-        BlocProvider<AddressBloc>(
-          create: (_) => AddressBloc(addressService)..add(LoadAddresses()),
-        ),
         BlocProvider<OrderBloc>(
           create: (_) => OrderBloc(orderService, cartRepository),
         ),
-        BlocProvider<PaymentBloc>(create: (_) => PaymentBloc(paymentService)),
         BlocProvider<PromotionBloc>(
-          create: (_) => PromotionBloc(promotionService),
+          create: (_) => PromotionBloc(promotionService)..add(LoadPromotions()),
         ),
       ],
       child: BlocListener<AuthBloc, AuthState>(
@@ -181,6 +171,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    context.read<UserBloc>().add(LoadUserInfo());
   }
 
   @override

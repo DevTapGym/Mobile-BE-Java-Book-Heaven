@@ -692,7 +692,7 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8.0),
                   child: Image.network(
-                    'http://10.0.2.2:8000$thumbnailUrl',
+                    'http://10.0.2.2:8080/storage/product/$thumbnailUrl',
                     fit: BoxFit.cover,
                     errorBuilder:
                         (context, error, stackTrace) => Icon(

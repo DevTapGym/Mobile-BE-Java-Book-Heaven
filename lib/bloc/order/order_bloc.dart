@@ -12,7 +12,6 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
 
   OrderBloc(this._orderService, this._cartService) : super(OrderInitial()) {
     on<LoadAllOrders>(_onLoadAllOrders);
-    on<LoadDetailOrder>(_onLoadDetailOrder);
     on<PlaceOrder>(_onPlaceOrder);
     on<CreateOrder>(_onCreateOrder);
     on<UpdateOrderStatus>(_onUpdateOrderStatus);
@@ -150,19 +149,6 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         AppSession().currentUser!.id,
       );
       emit(OrderLoaded(orders: orders));
-    } catch (e) {
-      emit(OrderError(e.toString()));
-    }
-  }
-
-  Future<void> _onLoadDetailOrder(
-    LoadDetailOrder event,
-    Emitter<OrderState> emit,
-  ) async {
-    emit(OrderLoading());
-    try {
-      final order = await _orderService.loadDetailOrder(event.orderId);
-      emit(OrderDetailLoaded(order: order));
     } catch (e) {
       emit(OrderError(e.toString()));
     }

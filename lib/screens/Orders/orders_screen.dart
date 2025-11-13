@@ -46,12 +46,17 @@ class _OrdersScreenState extends State<OrdersScreen>
   }
 
   List<Order> getOrdersByStatus(String status) {
-    return _filteredOrders.where((order) {
-      if (order.statusHistory.isEmpty) return false;
-      // Lấy trạng thái mới nhất
-      final latestStatus = order.statusHistory.last.name.toLowerCase();
-      return latestStatus == status.toLowerCase();
-    }).toList();
+    final orders =
+        _filteredOrders.where((order) {
+          if (order.statusHistory.isEmpty) return false;
+          // Lấy trạng thái mới nhất
+          final latestStatus = order.statusHistory.last.name.toLowerCase();
+          return latestStatus == status.toLowerCase();
+        }).toList();
+
+    // Sắp xếp từ mới nhất đến cũ nhất
+    orders.sort((a, b) => b.orderDate.compareTo(a.orderDate));
+    return orders;
   }
 
   List<Order> _getOrdersForTab(String tab) {
@@ -71,7 +76,10 @@ class _OrdersScreenState extends State<OrdersScreen>
       case 'Completed':
         return getOrdersByStatus('completed');
       default:
-        return _filteredOrders;
+        // Sắp xếp tất cả đơn hàng từ mới nhất đến cũ nhất
+        final allOrders = List<Order>.from(_filteredOrders);
+        allOrders.sort((a, b) => b.orderDate.compareTo(a.orderDate));
+        return allOrders;
     }
   }
 
@@ -2178,7 +2186,7 @@ class _OrdersScreenState extends State<OrdersScreen>
                       Navigator.pushNamed(
                         context,
                         '/detail-order',
-                        arguments: {'orderId': order.id},
+                        arguments: {'order': order},
                       );
                     },
                     style: OutlinedButton.styleFrom(
@@ -2324,7 +2332,7 @@ class _OrdersScreenState extends State<OrdersScreen>
               child:
                   item.bookThumbnail.isNotEmpty
                       ? Image.network(
-                        'http://10.0.2.2:8080/storage/Product/${item.bookThumbnail}',
+                        'http://10.0.2.2:8080/storage/product/${item.bookThumbnail}',
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return const Icon(
@@ -2364,7 +2372,7 @@ class _OrdersScreenState extends State<OrdersScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Qty: ${item.quantity} x ${FormatPrice.formatPrice(item.unitPrice)}',
+                  'SL: ${item.quantity} x ${FormatPrice.formatPrice(item.unitPrice)}',
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],

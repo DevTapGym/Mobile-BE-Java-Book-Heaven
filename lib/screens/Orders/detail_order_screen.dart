@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:heaven_book_app/bloc/order/order_bloc.dart';
-import 'package:heaven_book_app/bloc/order/order_event.dart';
-import 'package:heaven_book_app/bloc/order/order_state.dart';
+import 'package:heaven_book_app/model/order.dart';
 import 'package:heaven_book_app/model/order_item.dart';
 import 'package:heaven_book_app/model/status_order.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
@@ -17,7 +14,7 @@ class DetailOrderScreen extends StatefulWidget {
 }
 
 class _DetailOrderScreenState extends State<DetailOrderScreen> {
-  bool _isInitialized = false;
+  Order? _order;
 
   @override
   void initState() {
@@ -27,15 +24,12 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_isInitialized) {
-      _isInitialized = true;
-
+    if (_order == null) {
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
-      if (args != null) {
-        final orderId = args['orderId'];
-        context.read<OrderBloc>().add(LoadDetailOrder(orderId: orderId));
+      if (args != null && args['order'] != null) {
+        _order = args['order'] as Order;
       }
     }
   }
@@ -63,78 +57,66 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                BlocBuilder<OrderBloc, OrderState>(
-                  builder: (context, state) {
-                    if (state is OrderLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (state is OrderDetailLoaded) {
-                      return Card(
-                        color: Colors.white,
-                        margin: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                if (_order == null)
+                  const Center(
+                    child: Text(
+                      'Không có chi tiết đơn hàng.',
+                      style: TextStyle(fontSize: 16, color: Colors.red),
+                    ),
+                  )
+                else
+                  Card(
+                    color: Colors.white,
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 20, 14, 4),
+                          child: _statusSection(_order!.statusHistory),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(14, 20, 14, 4),
-                              child: _statusSection(state.order.statusHistory),
-                            ),
-                            Container(
-                              height: 6,
-                              width: double.infinity,
-                              color: AppColors.background,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(14.0),
-                              child: _shippingAddressSection(),
-                            ),
-                            Container(
-                              height: 6,
-                              width: double.infinity,
-                              color: AppColors.background,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(14.0),
-                              child: _itemsSection(),
-                            ),
-                            Container(
-                              height: 6,
-                              width: double.infinity,
-                              color: AppColors.background,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(14.0),
-                              child: _orderSummarySection(),
-                            ),
-                            Container(
-                              height: 6,
-                              width: double.infinity,
-                              color: AppColors.background,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(14.0),
-                              child: _orderDetailsSection(),
-                            ),
-                          ],
+                        Container(
+                          height: 6,
+                          width: double.infinity,
+                          color: AppColors.background,
                         ),
-                      );
-                    } else if (state is OrderError) {
-                      return Center(
-                        child: Text(
-                          'Error: ${state.message}',
-                          style: const TextStyle(color: Colors.red),
+                        Padding(
+                          padding: const EdgeInsets.all(14.0),
+                          child: _shippingAddressSection(),
                         ),
-                      );
-                    } else {
-                      return const Center(
-                        //child: Text('No order details available.'),
-                        child: Text('Không có chi tiết đơn hàng.'),
-                      );
-                    }
-                  },
-                ),
+                        Container(
+                          height: 6,
+                          width: double.infinity,
+                          color: AppColors.background,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(14.0),
+                          child: _itemsSection(),
+                        ),
+                        Container(
+                          height: 6,
+                          width: double.infinity,
+                          color: AppColors.background,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(14.0),
+                          child: _orderSummarySection(),
+                        ),
+                        Container(
+                          height: 6,
+                          width: double.infinity,
+                          color: AppColors.background,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(14.0),
+                          child: _orderDetailsSection(),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -144,10 +126,32 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
     );
   }
 
+  // Chuyển đổi trạng thái từ tiếng Anh sang tiếng Việt
+  String _getVietnameseStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'wait_confirm':
+        return 'Chờ xác nhận';
+      case 'processing':
+        return 'Đang xử lý';
+      case 'shipping':
+        return 'Đang giao';
+      case 'payment_completed':
+        return 'Đã thanh toán';
+      case 'completed':
+        return 'Hoàn thành';
+      case 'canceled':
+        return 'Đã hủy';
+      case 'returned':
+        return 'Đã trả hàng';
+      default:
+        return status.replaceAll('_', ' ');
+    }
+  }
+
   Widget _statusSection(List<StatusOrder> statusHistory) {
-    // Sort by sequence (descending) to show latest first
+    // Sort by timestamp (descending) to show newest first
     final sortedHistory = List<StatusOrder>.from(statusHistory)
-      ..sort((a, b) => b.sequence.compareTo(a.sequence));
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
     bool showAll = false;
     return StatefulBuilder(
@@ -190,7 +194,7 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                sortedHistory.first.name,
+                                _getVietnameseStatus(sortedHistory.first.name),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -251,7 +255,9 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          statusOrder.name,
+                                          _getVietnameseStatus(
+                                            statusOrder.name,
+                                          ),
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -335,85 +341,117 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
   }
 
   Widget _shippingAddressSection() {
+    if (_order == null) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        BlocBuilder<OrderBloc, OrderState>(
-          builder: (context, state) {
-            if (state is OrderDetailLoaded) {
-              final order = state.order;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    //'Shipping address:',
-                    'Địa chỉ giao hàng:',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 18.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on, color: Colors.blue),
-                            const SizedBox(width: 8),
-                            Text(
-                              //'Home',
-                              'Nhà riêng',
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          order.receiverAddress,
-                          style: const TextStyle(color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            } else {
-              return const SizedBox.shrink();
-            }
-          },
+        const Text(
+          'Thông tin giao hàng',
+          style: TextStyle(
+            fontSize: 18,
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Container với padding và background đẹp hơn
+        Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // Tên người nhận
+              _buildInfoRow(
+                icon: Icons.person_outline,
+                label: 'Người nhận',
+                value: _order!.receiverName,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Số điện thoại
+              _buildInfoRow(
+                icon: Icons.phone_outlined,
+                label: 'Số điện thoại',
+                value: _order!.receiverPhone,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Địa chỉ
+              _buildInfoRow(
+                icon: Icons.location_on_outlined,
+                label: 'Địa chỉ giao hàng',
+                value: _order!.receiverAddress,
+                isMultiline: true,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Helper method để tạo info row thống nhất
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    bool isMultiline = false,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: AppColors.primary, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
   Widget _itemsSection() {
+    if (_order == null) return const SizedBox.shrink();
+
     return Column(
-      children: [
-        BlocBuilder<OrderBloc, OrderState>(
-          builder: (context, state) {
-            if (state is OrderDetailLoaded) {
-              final order = state.order;
-              return Column(
-                children:
-                    order.items.map((item) => _buildOrderItem(item)).toList(),
-              );
-            } else {
-              return const SizedBox.shrink();
-            }
-          },
-        ),
-      ],
+      children: _order!.items.map((item) => _buildOrderItem(item)).toList(),
     );
   }
 
   Widget _orderSummarySection() {
+    if (_order == null) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -427,78 +465,66 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        BlocBuilder<OrderBloc, OrderState>(
-          builder: (context, state) {
-            if (state is OrderDetailLoaded) {
-              final order = state.order;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSummaryRow(
-                    //'Subtotal',
-                    'Tạm tính',
-                    FormatPrice.formatPrice(
-                      (order.totalAmount) + (order.totalPromotionValue ?? 0),
-                    ),
-                  ),
-                  _buildSummaryRow(
-                    //'Shipping',
-                    'Phí vận chuyển',
-                    FormatPrice.formatPrice(order.shippingFee),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 12),
-                    child: Text(
-                      //'Discounts:',
-                      'Giảm giá:',
-                      style: TextStyle(fontSize: 16, color: Colors.black54),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 12),
-                    child: _buildSummaryRow(
-                      //'- Shipping Voucher',
-                      '- Giảm phí vận chuyển',
-                      '-0 đ',
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 12),
-                    child: _buildSummaryRow(
-                      //'- Member Discount',
-                      '- Mã giảm giá',
-                      '-0 đ',
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 12),
-                    child: _buildSummaryRow(
-                      //'- Product Voucher',
-                      '- Giảm giá sản phẩm',
-                      '-${FormatPrice.formatPrice(order.totalPromotionValue ?? 0)}',
-                    ),
-                  ),
-                  const Divider(),
-                  _buildSummaryRow(
-                    //'Total',
-                    'Tổng cộng',
-                    FormatPrice.formatPrice(
-                      order.totalAmount + order.shippingFee,
-                    ),
-                    isBold: true,
-                  ),
-                ],
-              );
-            } else {
-              return const SizedBox.shrink();
-            }
-          },
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSummaryRow(
+              //'Subtotal',
+              'Tạm tính',
+              FormatPrice.formatPrice(
+                (_order!.totalAmount) + (_order!.totalPromotionValue ?? 0),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(left: 12),
+              child: Text(
+                //'Discounts:',
+                'Giảm giá:',
+                style: TextStyle(fontSize: 16, color: Colors.black54),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(left: 12),
+              child: _buildSummaryRow(
+                //'- Shipping Voucher',
+                '- Giảm phí vận chuyển',
+                '-0 đ',
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(left: 12),
+              child: _buildSummaryRow(
+                //'- Member Discount',
+                '- Mã giảm giá',
+                '-0 đ',
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(left: 12),
+              child: _buildSummaryRow(
+                //'- Product Voucher',
+                '- Giảm giá sản phẩm',
+                '-${FormatPrice.formatPrice(_order!.totalPromotionValue ?? 0)}',
+              ),
+            ),
+            const Divider(),
+            _buildSummaryRow(
+              //'Total',
+              'Tổng cộng',
+              FormatPrice.formatPrice(
+                _order!.totalAmount + _order!.shippingFee,
+              ),
+              isBold: true,
+            ),
+          ],
         ),
       ],
     );
   }
 
   Widget _orderDetailsSection() {
+    if (_order == null) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -512,53 +538,44 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        BlocBuilder<OrderBloc, OrderState>(
-          builder: (context, state) {
-            if (state is OrderDetailLoaded) {
-              final order = state.order;
-              return Column(
-                children: [
-                  _buildDetailRow(
-                    //'Order Number:',
-                    'Mã đơn hàng:',
-                    order.orderNumber,
-                  ),
-                  _buildDetailRow(
-                    //'Order Date:',
-                    'Ngày đặt hàng:',
-                    '${order.orderDate.hour}:${order.orderDate.minute} ${order.orderDate.day}-${order.orderDate.month}-${order.orderDate.year}',
-                  ),
-                  _buildDetailRow(
-                    //'Payment Method:',
-                    'Phương thức thanh toán:',
-                    order.paymentMethod,
-                  ),
-                  _buildDetailRow(
-                    //'Receiver Name:',
-                    'Tên người nhận:',
-                    order.receiverName,
-                  ),
-                  _buildDetailRow(
-                    //'Receiver Phone:',
-                    'Số điện thoại người nhận:',
-                    order.receiverPhone,
-                  ),
-                  _buildDetailRow(
-                    //'Receiver Address:',
-                    'Địa chỉ người nhận:',
-                    order.receiverAddress,
-                  ),
-                  _buildDetailRow(
-                    //'Note:',
-                    'Ghi chú:',
-                    order.note,
-                  ),
-                ],
-              );
-            } else {
-              return const SizedBox.shrink();
-            }
-          },
+        Column(
+          children: [
+            _buildDetailRow(
+              //'Order Number:',
+              'Mã đơn hàng:',
+              _order!.orderNumber,
+            ),
+            _buildDetailRow(
+              //'Order Date:',
+              'Ngày đặt hàng:',
+              '${_order!.orderDate.hour}:${_order!.orderDate.minute} ${_order!.orderDate.day}-${_order!.orderDate.month}-${_order!.orderDate.year}',
+            ),
+            _buildDetailRow(
+              //'Payment Method:',
+              'Phương thức thanh toán:',
+              _order!.paymentMethod,
+            ),
+            _buildDetailRow(
+              //'Receiver Name:',
+              'Tên người nhận:',
+              _order!.receiverName,
+            ),
+            _buildDetailRow(
+              //'Receiver Phone:',
+              'Số điện thoại người nhận:',
+              _order!.receiverPhone,
+            ),
+            _buildDetailRow(
+              //'Receiver Address:',
+              'Địa chỉ người nhận:',
+              _order!.receiverAddress,
+            ),
+            _buildDetailRow(
+              //'Note:',
+              'Ghi chú:',
+              _order!.note,
+            ),
+          ],
         ),
 
         // Center(
