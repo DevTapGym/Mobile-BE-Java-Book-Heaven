@@ -624,7 +624,7 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
-                  'http://10.0.2.2:8000${item.bookThumbnail}',
+                  'http://10.0.2.2:8080/storage/product/${item.bookThumbnail}',
                   fit: BoxFit.cover,
                   errorBuilder:
                       (context, error, stackTrace) =>

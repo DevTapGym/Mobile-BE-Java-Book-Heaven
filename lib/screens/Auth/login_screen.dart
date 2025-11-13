@@ -37,7 +37,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleGoogleLogin() {
-    context.read<AuthBloc>().add(LoginWithGoogleRequested());
+    //context.read<AuthBloc>().add(LoginWithGoogleRequested());
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Google login clicked')));
   }
 
   void _handleFacebookLogin() {

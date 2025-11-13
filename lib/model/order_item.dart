@@ -38,7 +38,7 @@ class OrderItem {
       bookId: product['id'] ?? 0, // đổi book_id -> product.id
       bookTitle: product['name'] ?? '',
       bookAuthor: product['author'] ?? '',
-      bookThumbnail: '', // JSON không có ảnh
+      bookThumbnail: product['thumbnail'], // JSON không có ảnh
       bookDescription: '', // JSON không có mô tả
       bookSaleOff: 0, // JSON không có sale_off
     );

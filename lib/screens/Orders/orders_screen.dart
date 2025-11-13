@@ -77,7 +77,11 @@ class _OrdersScreenState extends State<OrdersScreen>
         return getOrdersByStatus('completed');
       default:
         // Sắp xếp tất cả đơn hàng từ mới nhất đến cũ nhất
-        final allOrders = List<Order>.from(_filteredOrders);
+        // Loại bỏ các đơn trả hàng (có chứa "TH" trong mã đơn)
+        final allOrders =
+            _filteredOrders
+                .where((order) => !order.orderNumber.contains('TH'))
+                .toList();
         allOrders.sort((a, b) => b.orderDate.compareTo(a.orderDate));
         return allOrders;
     }

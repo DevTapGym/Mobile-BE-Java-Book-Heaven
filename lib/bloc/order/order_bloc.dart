@@ -58,14 +58,9 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         final orders = await _orderService.loadAllOrderByCustomer(
           AppSession().currentUser!.id,
         );
-        emit(
-          OrderLoaded(
-            orders: orders,
-            message: 'Order status updated successfully',
-          ),
-        );
+        emit(OrderLoaded(orders: orders, message: 'Đơn hàng đã được cập nhật'));
       } else {
-        emit(OrderError('Failed to update order status'));
+        emit(OrderError('Cập nhật đơn hàng thất bại'));
       }
     } catch (e) {
       emit(OrderError(e.toString()));
@@ -86,6 +81,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         name: event.name,
         items: event.items,
         promotionId: event.promotionId,
+        email: AppSession().currentUser!.email,
       );
       if (success) {
         // Xóa các sản phẩm đã đặt hàng khỏi giỏ hàng
@@ -105,10 +101,10 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
           AppSession().currentUser!.id,
         );
         emit(
-          OrderLoaded(orders: orders, message: 'Order created successfully'),
+          OrderLoaded(orders: orders, message: 'Đơn hàng đã đặt thành công'),
         );
       } else {
-        emit(OrderError('Failed to create order'));
+        emit(OrderError('Đặt hàng thất bại'));
       }
     } catch (e) {
       emit(OrderError(e.toString()));
