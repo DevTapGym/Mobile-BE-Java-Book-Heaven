@@ -5,13 +5,18 @@ import 'package:heaven_book_app/bloc/book/book_event.dart';
 import 'package:heaven_book_app/bloc/order/order_bloc.dart';
 import 'package:heaven_book_app/bloc/order/order_event.dart';
 import 'package:heaven_book_app/bloc/order/order_state.dart';
+import 'package:heaven_book_app/bloc/promotion/promotion_bloc.dart';
+import 'package:heaven_book_app/bloc/promotion/promotion_event.dart';
+import 'package:heaven_book_app/bloc/promotion/promotion_state.dart';
 import 'package:heaven_book_app/bloc/user/user_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_state.dart';
 import 'package:heaven_book_app/model/checkout.dart';
+import 'package:heaven_book_app/model/promotion.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
 import 'package:heaven_book_app/themes/format_price.dart';
 import 'package:heaven_book_app/widgets/appbar_custom_widget.dart';
 import 'package:heaven_book_app/widgets/custom_circle_checkbox.dart';
+import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
@@ -39,6 +44,8 @@ class BuyNowScreen extends StatefulWidget {
 class _BuyNowScreenState extends State<BuyNowScreen> {
   bool isChecked = false;
   int? selectedPaymentId;
+  int? selectedPromotionId;
+  bool showAllPromotions = false;
   final TextEditingController _noteController = TextEditingController();
 
   // Checkout items từ arguments
@@ -92,6 +99,7 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
   @override
   void initState() {
     super.initState();
+    context.read<PromotionBloc>().add(LoadPromotions());
     _loadAddressData();
   }
 
@@ -918,7 +926,6 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
     );
   }
 
-  // ignore: unused_element
   Widget _buildDiscountSection() {
     return Container(
       margin: EdgeInsets.only(bottom: 10.0, top: 10.0, left: 18.0, right: 18.0),
@@ -935,88 +942,331 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.discount_rounded,
-                    color: AppColors.black60,
-                    size: 30,
-                  ),
-                  SizedBox(width: 8.0),
-                  Text(
-                    'Discount:',
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+              Icon(Icons.discount_rounded, color: AppColors.black60, size: 30),
+              SizedBox(width: 8.0),
+              Text(
+                'Giảm giá:',
+                style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 16.0),
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 18.0,
-                      vertical: 4.0,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
-                      border: Border.all(
-                        color: AppColors.primaryDark,
-                        width: 2,
-                      ),
-                    ),
-                    child: Text(
-                      'Free Ship',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryDark,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 8.0),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 18.0,
-                      vertical: 4.0,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.discountRed.withAlpha(40),
-                      border: Border.all(
-                        color: AppColors.discountRed,
-                        width: 2,
-                      ),
-                    ),
-                    child: Text(
-                      '-60.000 đ',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.discountRed,
-                      ),
-                    ),
-                  ),
-                ],
+              Spacer(),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    showAllPromotions = !showAllPromotions;
+                  });
+                },
+                icon: Icon(
+                  showAllPromotions
+                      ? Icons.keyboard_arrow_up
+                      : Icons.arrow_forward_ios,
+                  color: AppColors.primaryDark,
+                  size: 20,
+                ),
               ),
             ],
           ),
-          Spacer(),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(
-              Icons.arrow_forward_ios,
-              color: AppColors.primaryDark,
-              size: 20,
-            ),
+
+          // Danh sách promotions
+          SizedBox(height: 8.0),
+          BlocBuilder<PromotionBloc, PromotionState>(
+            builder: (context, promotionState) {
+              if (promotionState is PromotionLoading) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              } else if (promotionState is PromotionLoaded) {
+                if (checkoutItems.isEmpty) {
+                  return SizedBox.shrink();
+                }
+
+                // Tính tổng tiền đơn hàng
+                final totalAmount = checkoutItems.fold<double>(
+                  0,
+                  (sum, item) =>
+                      sum +
+                      (item.unitPrice - (item.unitPrice * item.saleOff / 100)) *
+                          item.quantity,
+                );
+
+                // Lọc promotions còn hiệu lực và đang active
+                final now = DateTime.now();
+                final validPromotions =
+                    promotionState.promotions.where((promo) {
+                      if (!promo.status) {
+                        return false;
+                      }
+                      if (promo.endDate != null) {
+                        try {
+                          final endDate = DateFormat(
+                            'yyyy-MM-dd',
+                          ).parse(promo.endDate!);
+                          if (endDate.isBefore(now)) return false;
+                        } catch (e) {
+                          return false;
+                        }
+                      }
+                      return true;
+                    }).toList();
+
+                // Hiển thị 2 hoặc tất cả promotions
+                final displayPromotions =
+                    showAllPromotions
+                        ? validPromotions
+                        : validPromotions.take(1).toList();
+
+                if (validPromotions.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Center(
+                      child: Text(
+                        'Không có mã giảm giá khả dụng',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                return Column(
+                  children: [
+                    ...displayPromotions.map((promotion) {
+                      // Kiểm tra order có thỏa điều kiện không
+                      final isEligible =
+                          totalAmount >= (promotion.orderMinValue ?? 0);
+                      final isSelected = selectedPromotionId == promotion.id;
+
+                      return _buildPromotionItem(
+                        promotion: promotion,
+                        isEligible: isEligible,
+                        isSelected: isSelected,
+                        onTap: () {
+                          if (isEligible) {
+                            setState(() {
+                              selectedPromotionId =
+                                  isSelected ? null : promotion.id;
+                            });
+                          } else {
+                            // Hiển thị thông báo không đủ điều kiện
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Đơn hàng chưa đạt giá trị tối thiểu ${FormatPrice.formatPrice(promotion.orderMinValue ?? 0)}',
+                                ),
+                                backgroundColor: Colors.orange,
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      );
+                    }),
+                    if (validPromotions.length > 2)
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            showAllPromotions = !showAllPromotions;
+                          });
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              showAllPromotions
+                                  ? 'Thu gọn'
+                                  : 'Xem thêm ${validPromotions.length - 2} mã',
+                              style: TextStyle(
+                                color: AppColors.primaryDark,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Icon(
+                              showAllPromotions
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: AppColors.primaryDark,
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                );
+              } else if (promotionState is PromotionError) {
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Lỗi tải mã giảm giá',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                );
+              }
+              return SizedBox.shrink();
+            },
           ),
         ],
+      ),
+    );
+  }
+
+  // Helper function để tính giá trị giảm từ promotion
+  double _calculatePromotionDiscount(Promotion promotion, double subtotal) {
+    if (promotion.promotionType.toLowerCase() == 'freeship') {
+      // Miễn phí ship, trả về giá trị shipping fee (30000)
+      return 30000.0;
+    } else if (promotion.promotionType.toLowerCase() == 'percent') {
+      // Giảm theo phần trăm
+      double discountValue = subtotal * (promotion.promotionValue ?? 0) / 100;
+      // Kiểm tra giảm tối đa
+      if (promotion.isMaxPromotionValue &&
+          promotion.maxPromotionValue != null &&
+          discountValue > promotion.maxPromotionValue!) {
+        return promotion.maxPromotionValue!;
+      }
+      return discountValue;
+    } else {
+      // Giảm giá cố định
+      return promotion.promotionValue ?? 0;
+    }
+  }
+
+  Widget _buildPromotionItem({
+    required Promotion promotion,
+    required bool isEligible,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    // Format ngày hết hạn
+    String validUntil = '';
+    if (promotion.endDate != null) {
+      try {
+        final date = DateFormat('yyyy-MM-dd').parse(promotion.endDate!);
+        validUntil = 'HSD: ${DateFormat('dd/MM/yyyy').format(date)}';
+      } catch (e) {
+        validUntil = 'HSD: ${promotion.endDate}';
+      }
+    }
+
+    return Opacity(
+      opacity: isEligible ? 1.0 : 0.5,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12.0),
+        padding: EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color:
+              isSelected
+                  ? AppColors.primaryDark.withValues(alpha: 0.1)
+                  : Colors.grey[100],
+          borderRadius: BorderRadius.circular(12.0),
+          border: Border.all(
+            color:
+                isSelected
+                    ? AppColors.primaryDark
+                    : (isEligible ? Colors.grey[300]! : Colors.grey[400]!),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12.0),
+          child: Row(
+            children: [
+              // Icon promotion
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color:
+                      isEligible
+                          ? AppColors.primaryDark.withValues(alpha: 0.1)
+                          : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Icon(
+                  promotion.promotionType.toLowerCase() == 'freeship'
+                      ? Icons.local_shipping
+                      : Icons.discount,
+                  color: isEligible ? AppColors.primaryDark : Colors.grey[600],
+                  size: 28,
+                ),
+              ),
+              SizedBox(width: 12.0),
+              // Thông tin promotion
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      promotion.name,
+                      style: TextStyle(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.bold,
+                        color: isEligible ? Colors.black87 : Colors.grey[600],
+                      ),
+                    ),
+                    SizedBox(height: 4.0),
+                    if (promotion.promotionType.toLowerCase() == 'percent')
+                      Text(
+                        'Giảm giá ${promotion.promotionValue}% cho đơn hàng từ ${FormatPrice.formatPrice(promotion.orderMinValue ?? 0)}',
+                        style: TextStyle(
+                          fontSize: 13.0,
+                          color: isEligible ? Colors.black54 : Colors.grey[500],
+                        ),
+                      )
+                    else
+                      Text(
+                        'Giảm giá ${FormatPrice.formatPrice(promotion.promotionValue ?? 0)} cho đơn hàng từ ${FormatPrice.formatPrice(promotion.orderMinValue ?? 0)}',
+                        style: TextStyle(
+                          fontSize: 13.0,
+                          color: isEligible ? Colors.black54 : Colors.grey[500],
+                        ),
+                      ),
+                    if (validUntil.isNotEmpty) ...[
+                      SizedBox(height: 4.0),
+                      Text(
+                        validUntil,
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          color: isEligible ? AppColors.text : Colors.grey[400],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                    if (!isEligible) ...[
+                      SizedBox(height: 4.0),
+                      Text(
+                        'Chưa đủ điều kiện',
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          color: Colors.red,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // Checkbox
+              CustomCircleCheckbox(
+                value: isSelected,
+                onChanged:
+                    isEligible
+                        ? (value) {
+                          onTap();
+                        }
+                        : (value) {},
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1236,83 +1486,92 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
       (sum, item) =>
           sum + (item.unitPrice * (item.saleOff / 100)) * item.quantity,
     );
-    final total = subtotal - discount;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 20.0, left: 18.0, right: 18.0),
-      padding: EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.0),
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 8,
-            spreadRadius: 1,
-            offset: Offset(0, 0),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSummaryRow(
-            //'Subtotal',
-            'Tạm tính',
-            FormatPrice.formatPrice(subtotal),
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 12),
-            child: Text(
-              //'Discounts:',
-              'Giảm giá:',
-              style: TextStyle(
-                fontSize: 16,
-                color: AppColors.black70,
-                fontWeight: FontWeight.w700,
+    // Tính giảm giá từ promotion
+    return BlocBuilder<PromotionBloc, PromotionState>(
+      builder: (context, promotionState) {
+        double promotionDiscount = 0;
+
+        if (promotionState is PromotionLoaded && selectedPromotionId != null) {
+          final selectedPromo = promotionState.promotions.firstWhere(
+            (p) => p.id == selectedPromotionId,
+            orElse: () => promotionState.promotions.first,
+          );
+          promotionDiscount = _calculatePromotionDiscount(
+            selectedPromo,
+            subtotal - discount,
+          );
+        }
+
+        final total = subtotal - discount - promotionDiscount;
+
+        return Container(
+          margin: EdgeInsets.only(bottom: 20.0, left: 18.0, right: 18.0),
+          padding: EdgeInsets.all(20.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16.0),
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 8,
+                spreadRadius: 1,
+                offset: Offset(0, 0),
               ),
-            ),
+            ],
           ),
-          SizedBox(height: 4),
-          Padding(
-            padding: EdgeInsets.only(left: 12),
-            child: _buildSummaryRow(
-              //'- Shipping Voucher',
-              '- Giảm phí vận chuyển',
-              '-${FormatPrice.formatPrice(0.0)}',
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSummaryRow('Tạm tính', FormatPrice.formatPrice(subtotal)),
+              Padding(
+                padding: EdgeInsets.only(left: 12),
+                child: Text(
+                  'Giảm giá:',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.black70,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              SizedBox(height: 4),
+              Padding(
+                padding: EdgeInsets.only(left: 12),
+                child: _buildSummaryRow(
+                  '- Giảm phí vận chuyển',
+                  '-${FormatPrice.formatPrice(0.0)}',
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 12),
+                child: _buildSummaryRow(
+                  '- Mã giảm giá',
+                  '-${FormatPrice.formatPrice(promotionDiscount)}',
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(left: 12),
+                child: _buildSummaryRow(
+                  '- Giảm giá sản phẩm',
+                  '-${FormatPrice.formatPrice(discount)}',
+                ),
+              ),
+              Divider(color: Colors.grey, height: 32.0),
+              _buildSummaryRow(
+                'Tổng Giảm Giá',
+                '-${FormatPrice.formatPrice(discount + promotionDiscount)}',
+                isBold: true,
+              ),
+              _buildSummaryRow(
+                'Tổng Cộng',
+                FormatPrice.formatPrice(total),
+                isBold: true,
+              ),
+            ],
           ),
-          Padding(
-            padding: EdgeInsets.only(left: 12),
-            child: _buildSummaryRow(
-              //'- Member Voucher',
-              '- Mã giảm giá',
-              '-${FormatPrice.formatPrice(0.0)}',
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 12),
-            child: _buildSummaryRow(
-              //'- Product Voucher',
-              '- Giảm giá sản phẩm',
-              '-${FormatPrice.formatPrice(discount)}',
-            ),
-          ),
-          Divider(color: Colors.grey, height: 32.0),
-          _buildSummaryRow(
-            //'Total Discounts',
-            'Tổng Giảm Giá',
-            '-${FormatPrice.formatPrice(discount)}',
-            isBold: true,
-          ),
-          _buildSummaryRow(
-            //'Total',
-            'Tổng Cộng',
-            FormatPrice.formatPrice(total),
-            isBold: true,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1321,10 +1580,9 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
       return SizedBox.shrink();
     }
 
-    final totalPrice = checkoutItems.fold<double>(
+    final subtotal = checkoutItems.fold<double>(
       0.0,
-      (sum, item) =>
-          sum + (item.unitPrice * (1 - (item.saleOff / 100))) * item.quantity,
+      (sum, item) => sum + (item.unitPrice) * item.quantity,
     );
 
     final totalQuantity = checkoutItems.fold<int>(
@@ -1338,192 +1596,213 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
           sum + (item.unitPrice * (item.saleOff / 100)) * item.quantity,
     );
 
-    return Container(
-      height: 160,
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 18.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 8,
-            spreadRadius: 1,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Text(
-                //'Total',
-                'Tổng Cộng',
-                style: TextStyle(
-                  fontSize: 22.0,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(width: 4.0),
-              Text(
-                '($totalQuantity items)',
-                style: TextStyle(
-                  fontSize: 14.0,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.black70,
-                ),
-              ),
-              Spacer(),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    FormatPrice.formatPrice(totalPrice),
-                    style: TextStyle(
-                      fontSize: 22.0,
-                      color: Colors.red,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  Text(
-                    'Save ${FormatPrice.formatPrice(discount)}',
-                    style: TextStyle(
-                      letterSpacing: -1,
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.black70,
-                    ),
-                  ),
-                ],
+    // Tính giảm giá từ promotion và shipping fee
+    return BlocBuilder<PromotionBloc, PromotionState>(
+      builder: (context, promotionState) {
+        double promotionDiscount = 0;
+
+        if (promotionState is PromotionLoaded && selectedPromotionId != null) {
+          final selectedPromo = promotionState.promotions.firstWhere(
+            (p) => p.id == selectedPromotionId,
+            orElse: () => promotionState.promotions.first,
+          );
+          promotionDiscount = _calculatePromotionDiscount(
+            selectedPromo,
+            subtotal - discount,
+          );
+        }
+
+        final totalPrice = subtotal - discount - promotionDiscount;
+
+        return Container(
+          height: 160,
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 18.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 8,
+                spreadRadius: 1,
+                offset: Offset(0, -2),
               ),
             ],
           ),
-          Container(
-            margin: EdgeInsets.only(top: 10.0),
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed:
-                  (_isAddressValid() && selectedPaymentId != null)
-                      ? () {
-                        // Validate all address fields
-                        if (_recipientNameController.text.trim().isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Vui lòng nhập tên người nhận'),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
-                          return;
-                        }
-                        if (_phoneController.text.trim().isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Vui lòng nhập số điện thoại'),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
-                          return;
-                        }
-                        if (!RegExp(
-                          r'^0[0-9]{9,10}$',
-                        ).hasMatch(_phoneController.text.trim())) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Số điện thoại không hợp lệ (10-11 chữ số, bắt đầu bằng 0)',
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'Tổng Cộng',
+                    style: TextStyle(
+                      fontSize: 22.0,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black,
+                    ),
+                  ),
+                  SizedBox(width: 4.0),
+                  Text(
+                    '($totalQuantity items)',
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.black70,
+                    ),
+                  ),
+                  Spacer(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        FormatPrice.formatPrice(totalPrice),
+                        style: TextStyle(
+                          fontSize: 22.0,
+                          color: Colors.red,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        'Save ${FormatPrice.formatPrice(discount + promotionDiscount)}',
+                        style: TextStyle(
+                          letterSpacing: -1,
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.black70,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                margin: EdgeInsets.only(top: 10.0),
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed:
+                      (_isAddressValid() && selectedPaymentId != null)
+                          ? () {
+                            // Validate all address fields
+                            if (_recipientNameController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Vui lòng nhập tên người nhận'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+                            if (_phoneController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Vui lòng nhập số điện thoại'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+                            if (!RegExp(
+                              r'^0[0-9]{9,10}$',
+                            ).hasMatch(_phoneController.text.trim())) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Số điện thoại không hợp lệ (10-11 chữ số, bắt đầu bằng 0)',
+                                  ),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+                            if (_selectedProvince == null ||
+                                _selectedDistrict == null ||
+                                _selectedWard == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Vui lòng chọn đầy đủ địa chỉ (Tỉnh/Huyện/Xã)',
+                                  ),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+
+                            // Get user data
+                            final authState = context.read<UserBloc>().state;
+
+                            if (authState is! UserLoaded) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Vui lòng đăng nhập để đặt hàng',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+
+                            final userData = authState.userData;
+
+                            // Get payment method name from hardcoded list
+                            String paymentMethodName = 'COD';
+                            if (selectedPaymentId != null) {
+                              final selectedPayment = _paymentMethods
+                                  .firstWhere(
+                                    (p) => p.id == selectedPaymentId,
+                                    orElse: () => _paymentMethods.first,
+                                  );
+                              paymentMethodName = selectedPayment.name;
+                            }
+
+                            // Build items list from checkoutItems
+                            final items =
+                                checkoutItems.map((item) {
+                                  return {
+                                    'productId': item.bookId,
+                                    'quantity': item.quantity,
+                                  };
+                                }).toList();
+
+                            // Dispatch CreateOrder event
+                            context.read<OrderBloc>().add(
+                              CreateOrder(
+                                note: _noteController.text.trim(),
+                                paymentMethod: paymentMethodName,
+                                phone: _phoneController.text.trim(),
+                                address: _getFullAddress(),
+                                name: _recipientNameController.text.trim(),
+                                items: items,
+                                customerId: userData.customer!.id,
                               ),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
-                          return;
-                        }
-                        if (_selectedProvince == null ||
-                            _selectedDistrict == null ||
-                            _selectedWard == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Vui lòng chọn đầy đủ địa chỉ (Tỉnh/Huyện/Xã)',
-                              ),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
-                          return;
-                        }
-
-                        // Get user data
-                        final authState = context.read<UserBloc>().state;
-
-                        if (authState is! UserLoaded) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Vui lòng đăng nhập để đặt hàng'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          return;
-                        }
-
-                        final userData = authState.userData;
-
-                        // Get payment method name from hardcoded list
-                        String paymentMethodName = 'COD';
-                        if (selectedPaymentId != null) {
-                          final selectedPayment = _paymentMethods.firstWhere(
-                            (p) => p.id == selectedPaymentId,
-                            orElse: () => _paymentMethods.first,
-                          );
-                          paymentMethodName = selectedPayment.name;
-                        }
-
-                        // Build items list from checkoutItems
-                        final items =
-                            checkoutItems.map((item) {
-                              return {
-                                'productId': item.bookId,
-                                'quantity': item.quantity,
-                              };
-                            }).toList();
-
-                        // Dispatch CreateOrder event
-                        context.read<OrderBloc>().add(
-                          CreateOrder(
-                            note: _noteController.text.trim(),
-                            paymentMethod: paymentMethodName,
-                            phone: _phoneController.text.trim(),
-                            address: _getFullAddress(),
-                            name: _recipientNameController.text.trim(),
-                            items: items,
-                            customerId: userData.customer!.id,
-                          ),
-                        );
-                      }
-                      : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    (_isAddressValid() && selectedPaymentId != null)
-                        ? AppColors.primaryDark
-                        : Colors.grey,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
+                            );
+                          }
+                          : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        (_isAddressValid() && selectedPaymentId != null)
+                            ? AppColors.primaryDark
+                            : Colors.grey,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                  ),
+                  child: Text(
+                    'Đặt Hàng',
+                    style: TextStyle(
+                      fontSize: 18.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
-              child: Text(
-                //'Place Order',
-                'Đặt Hàng',
-                style: TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1610,7 +1889,7 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
               children: [
                 _buildAddressSection(),
                 _buildProductsSection(),
-                //_buildDiscountSection(),
+                _buildDiscountSection(),
                 _buildPaymentSection(),
                 _buildNoteSection(_noteController),
                 _buildOrderSummarySection(),
