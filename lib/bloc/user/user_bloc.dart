@@ -86,11 +86,11 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         emit(
           UserLoaded(
             userData: await authService.getCurrentUser(),
-            message: "User information updated successfully",
+            message: "Cập nhật thông tin người dùng thành công",
           ),
         );
       } else {
-        emit(UserError("Failed to update user information"));
+        emit(UserError("Cập nhật thông tin người dùng thất bại"));
       }
     } catch (e) {
       emit(UserError(e.toString()));

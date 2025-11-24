@@ -7,6 +7,7 @@ import 'package:heaven_book_app/bloc/cart/cart_event.dart';
 import 'package:heaven_book_app/bloc/category/category_bloc.dart';
 import 'package:heaven_book_app/bloc/category/category_event.dart';
 import 'package:heaven_book_app/bloc/category/category_state.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/book.dart';
 import 'package:heaven_book_app/model/category.dart';
 import 'package:heaven_book_app/services/category_service.dart';
@@ -386,7 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'book_id': bannerBooks.isNotEmpty ? bannerBooks[0].id : null,
               'books':
                   bannerBooks.isNotEmpty
-                      ? 'http://10.0.2.2:8080/storage/product/${bannerBooks[0].thumbnail}'
+                      ? '${AppSession.baseUrlImg}${bannerBooks[0].thumbnail}'
                       : null,
             },
             {
@@ -402,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'book_id': bannerBooks.isNotEmpty ? bannerBooks[1].id : null,
               'books':
                   bannerBooks.length > 1
-                      ? 'http://10.0.2.2:8080/storage/product/${bannerBooks[1].thumbnail}'
+                      ? '${AppSession.baseUrlImg}${bannerBooks[1].thumbnail}'
                       : null,
             },
             {
@@ -421,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'book_id': bannerBooks.isNotEmpty ? bannerBooks[2].id : null,
               'books':
                   bannerBooks.length > 2
-                      ? 'http://10.0.2.2:8080/storage/product/${bannerBooks[2].thumbnail}'
+                      ? '${AppSession.baseUrlImg}${bannerBooks[2].thumbnail}'
                       : null,
             },
             {
@@ -437,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'book_id': bannerBooks.isNotEmpty ? bannerBooks[3].id : null,
               'books':
                   bannerBooks.length > 3
-                      ? 'http://10.0.2.2:8080/storage/product/${bannerBooks[3].thumbnail}'
+                      ? '${AppSession.baseUrlImg}${bannerBooks[3].thumbnail}'
                       : null,
             },
           ];
@@ -871,7 +872,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             child: Center(
                               child: Image.network(
-                                'http://10.0.2.2:8080/storage/Product/${book.thumbnail}',
+                                '${AppSession.baseUrlImg}${book.thumbnail}',
                                 width: 120,
                                 height: 160,
                                 fit: BoxFit.cover,
@@ -1244,7 +1245,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child:
                           book.thumbnail.isNotEmpty
                               ? Image.network(
-                                'http://10.0.2.2:8080/storage/Product/${book.thumbnail}',
+                                '${AppSession.baseUrlImg}${book.thumbnail}',
                                 width: 80,
                                 height: 120,
                                 fit: BoxFit.cover,

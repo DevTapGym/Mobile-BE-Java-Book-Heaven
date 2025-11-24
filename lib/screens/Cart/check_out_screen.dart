@@ -10,6 +10,7 @@ import 'package:heaven_book_app/bloc/promotion/promotion_event.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_state.dart';
 import 'package:heaven_book_app/bloc/user/user_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_state.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/promotion.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
 import 'package:heaven_book_app/themes/format_price.dart';
@@ -683,7 +684,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8.0),
                   child: Image.network(
-                    'http://10.0.2.2:8080/storage/Product/$thumbnailUrl',
+                    '${AppSession.baseUrlImg}$thumbnailUrl',
                     fit: BoxFit.cover,
                     errorBuilder:
                         (context, error, stackTrace) => Icon(
@@ -1460,7 +1461,6 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
               (sum, item) => sum + (item.unitPrice) * item.quantity,
             );
 
-            double shippingFee = 30000.0;
             final discount = cartItems.fold<double>(
               0.0,
               (sum, item) =>
@@ -1471,7 +1471,6 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
             return BlocBuilder<PromotionBloc, PromotionState>(
               builder: (context, promotionState) {
                 double promotionDiscount = 0.0;
-                bool isFreeShip = false;
 
                 if (promotionState is PromotionLoaded &&
                     selectedPromotionId != null) {
@@ -1481,21 +1480,13 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         orElse: () => promotionState.promotions.first,
                       );
 
-                  if (selectedPromotion.promotionType.toLowerCase() ==
-                      'freeship') {
-                    isFreeShip = true;
-                    promotionDiscount = shippingFee;
-                    shippingFee = 0.0;
-                  } else {
-                    promotionDiscount = _calculatePromotionDiscount(
-                      selectedPromotion,
-                      subtotal,
-                    );
-                  }
+                  promotionDiscount = _calculatePromotionDiscount(
+                    selectedPromotion,
+                    subtotal,
+                  );
                 }
 
-                final total =
-                    subtotal + shippingFee - discount - promotionDiscount;
+                final total = subtotal - discount - promotionDiscount;
 
                 return Container(
                   margin: EdgeInsets.only(
@@ -1524,11 +1515,6 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         'Tạm tính',
                         FormatPrice.formatPrice(subtotal),
                       ),
-                      _buildSummaryRow(
-                        //'Shipping Fee',
-                        'Phí vận chuyển',
-                        FormatPrice.formatPrice(isFreeShip ? 0.0 : 30000.0),
-                      ),
                       Padding(
                         padding: EdgeInsets.only(left: 12),
                         child: Text(
@@ -1542,30 +1528,20 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         ),
                       ),
                       SizedBox(height: 4),
-                      if (isFreeShip)
-                        Padding(
-                          padding: EdgeInsets.only(left: 12),
-                          child: _buildSummaryRow(
-                            //'- Shipping Voucher',
-                            '- Giảm phí vận chuyển',
-                            '-${FormatPrice.formatPrice(30000.0)}',
-                          ),
-                        )
-                      else
-                        Padding(
-                          padding: EdgeInsets.only(left: 12),
-                          child: _buildSummaryRow(
-                            //'- Shipping Voucher',
-                            '- Giảm phí vận chuyển',
-                            '-${FormatPrice.formatPrice(0.0)}',
-                          ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 12),
+                        child: _buildSummaryRow(
+                          //'- Shipping Voucher',
+                          '- Giảm phí vận chuyển',
+                          '-${FormatPrice.formatPrice(0.0)}',
                         ),
+                      ),
                       Padding(
                         padding: EdgeInsets.only(left: 12),
                         child: _buildSummaryRow(
                           //'- Member Voucher',
                           '- Mã giảm giá',
-                          '-${FormatPrice.formatPrice(isFreeShip ? 0.0 : promotionDiscount)}',
+                          '-${FormatPrice.formatPrice(promotionDiscount)}',
                         ),
                       ),
                       Padding(
@@ -1643,7 +1619,6 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
             return BlocBuilder<PromotionBloc, PromotionState>(
               builder: (context, promotionState) {
                 double promotionDiscount = 0.0;
-                double shippingFee = 30000.0;
 
                 if (promotionState is PromotionLoaded &&
                     selectedPromotionId != null) {
@@ -1653,20 +1628,13 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         orElse: () => promotionState.promotions.first,
                       );
 
-                  if (selectedPromotion.promotionType.toLowerCase() ==
-                      'freeship') {
-                    promotionDiscount = shippingFee;
-                    shippingFee = 0.0;
-                  } else {
-                    promotionDiscount = _calculatePromotionDiscount(
-                      selectedPromotion,
-                      subtotal,
-                    );
-                  }
+                  promotionDiscount = _calculatePromotionDiscount(
+                    selectedPromotion,
+                    subtotal,
+                  );
                 }
 
-                final totalPrice =
-                    subtotal + shippingFee - discount - promotionDiscount;
+                final totalPrice = subtotal - discount - promotionDiscount;
                 final totalSavings = discount + promotionDiscount;
 
                 return Container(

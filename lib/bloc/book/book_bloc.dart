@@ -23,11 +23,14 @@ class BookBloc extends Bloc<BookEvent, BookState> {
       // final bannerBooks = await bookService.getBannerBooks();
       // final randomBooks = await bookService.getRandomBooks();
 
-      final popularBooks = await bookService.getAllBooks();
-      final saleOffBooks = await bookService.getAllBooks();
-      //final bestSellingBooks = await bookService.getAllBooks();
-      final bannerBooks = await bookService.getAllBooks();
-      final randomBooks = await bookService.getAllBooks();
+      final allBooks = await bookService.getAllBooks();
+
+      // Tạo các danh sách với thứ tự xáo trộn khác nhau
+      final popularBooks = [...allBooks]..shuffle();
+      final saleOffBooks = [...allBooks]..shuffle();
+      final bannerBooks = allBooks;
+      final randomBooks = [...allBooks]..shuffle();
+
       emit(
         BookLoaded(
           popularBooks: popularBooks,

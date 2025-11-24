@@ -315,12 +315,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           fontSize: 17,
                                         ),
                                       ),
-                                      onTap: () {
-                                        Navigator.pushNamed(
-                                          context,
-                                          '/shipping-address',
-                                        );
-                                      },
+                                      onTap: () {},
                                     ),
                                     ListTile(
                                       leading: Icon(

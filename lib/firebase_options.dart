@@ -17,17 +17,29 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      return web;
+      throw UnsupportedError(
+        'DefaultFirebaseOptions have not been configured for web - '
+        'you can reconfigure this by running the FlutterFire CLI again.',
+      );
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        return ios;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for ios - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.macOS:
-        return macos;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.windows:
-        return windows;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -40,54 +52,11 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAEa4tAdEK7VPzWaG4gdTVfQXmpGrwp2mo',
-    appId: '1:1024264519953:web:170b059dbe8e4bc69c4cb0',
-    messagingSenderId: '1024264519953',
-    projectId: 'book-heaven-b10a0',
-    authDomain: 'book-heaven-b10a0.firebaseapp.com',
-    storageBucket: 'book-heaven-b10a0.firebasestorage.app',
-    measurementId: 'G-84M9TFNW40',
-  );
-
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyATiAVndOXs-yZsf-UEWFdGuNbxTAA_UlU',
-    appId: '1:1024264519953:android:9ff612331801f9889c4cb0',
-    messagingSenderId: '1024264519953',
-    projectId: 'book-heaven-b10a0',
-    storageBucket: 'book-heaven-b10a0.firebasestorage.app',
+    apiKey: 'AIzaSyCQ2spKpkQ6dVo67AmujJCe0ovTdk713g0',
+    appId: '1:679631373008:android:c8ee450ebf4bdead8294d5',
+    messagingSenderId: '679631373008',
+    projectId: 'bookstore-dc767',
+    storageBucket: 'bookstore-dc767.firebasestorage.app',
   );
-
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDebJP5fRNbxOiKa3ELzzSaGfkO-TNe-Hc',
-    appId: '1:1024264519953:ios:2638bdb9e6ff60249c4cb0',
-    messagingSenderId: '1024264519953',
-    projectId: 'book-heaven-b10a0',
-    storageBucket: 'book-heaven-b10a0.firebasestorage.app',
-    androidClientId: '1024264519953-fhact2r3a5jb5f02v2vcgkdauvmu4i99.apps.googleusercontent.com',
-    iosClientId: '1024264519953-njn38tn3i2ngv3i1q13if5p8a58pn8lv.apps.googleusercontent.com',
-    iosBundleId: 'com.example.heavenBookApp',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDebJP5fRNbxOiKa3ELzzSaGfkO-TNe-Hc',
-    appId: '1:1024264519953:ios:2638bdb9e6ff60249c4cb0',
-    messagingSenderId: '1024264519953',
-    projectId: 'book-heaven-b10a0',
-    storageBucket: 'book-heaven-b10a0.firebasestorage.app',
-    androidClientId: '1024264519953-fhact2r3a5jb5f02v2vcgkdauvmu4i99.apps.googleusercontent.com',
-    iosClientId: '1024264519953-njn38tn3i2ngv3i1q13if5p8a58pn8lv.apps.googleusercontent.com',
-    iosBundleId: 'com.example.heavenBookApp',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAEa4tAdEK7VPzWaG4gdTVfQXmpGrwp2mo',
-    appId: '1:1024264519953:web:e0362dd7d097fb029c4cb0',
-    messagingSenderId: '1024264519953',
-    projectId: 'book-heaven-b10a0',
-    authDomain: 'book-heaven-b10a0.firebaseapp.com',
-    storageBucket: 'book-heaven-b10a0.firebasestorage.app',
-    measurementId: 'G-ZR56L2SVNX',
-  );
-
 }

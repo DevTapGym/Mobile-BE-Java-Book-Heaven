@@ -80,6 +80,7 @@ class OrderService {
     required String paymentMethod,
     required int customerId,
     int? promotionId,
+    String? email,
     required List<Map<String, dynamic>> items,
   }) async {
     try {

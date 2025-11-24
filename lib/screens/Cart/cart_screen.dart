@@ -5,6 +5,7 @@ import 'package:heaven_book_app/bloc/cart/cart_event.dart';
 import 'package:heaven_book_app/bloc/cart/cart_state.dart';
 import 'package:heaven_book_app/bloc/user/user_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_state.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/book.dart';
 import 'package:heaven_book_app/model/cart_item.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
@@ -516,7 +517,7 @@ class _CartScreenState extends State<CartScreen> {
                 child:
                     items.bookThumbnail.isNotEmpty
                         ? Image.network(
-                          'http://10.0.2.2:8080/storage/Product/${items.bookThumbnail}',
+                          '${AppSession.baseUrlImg}${items.bookThumbnail}',
                           width: 100,
                           height: 160,
                           fit: BoxFit.cover,
@@ -858,7 +859,7 @@ class _CartScreenState extends State<CartScreen> {
                     child:
                         book.thumbnail.isNotEmpty
                             ? Image.network(
-                              'http://10.0.2.2:8080/storage/Product/${book.thumbnail}',
+                              '${AppSession.baseUrlImg}${book.thumbnail}',
                               width: double.infinity,
                               height: 170,
                               fit: BoxFit.cover,

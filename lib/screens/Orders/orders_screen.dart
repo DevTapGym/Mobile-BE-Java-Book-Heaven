@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heaven_book_app/bloc/order/order_bloc.dart';
 import 'package:heaven_book_app/bloc/order/order_event.dart';
 import 'package:heaven_book_app/bloc/order/order_state.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/checkout.dart';
 import 'package:heaven_book_app/model/order.dart';
 import 'package:heaven_book_app/model/order_item.dart';
@@ -77,7 +78,11 @@ class _OrdersScreenState extends State<OrdersScreen>
         return getOrdersByStatus('completed');
       default:
         // Sắp xếp tất cả đơn hàng từ mới nhất đến cũ nhất
-        final allOrders = List<Order>.from(_filteredOrders);
+        // Loại bỏ các đơn trả hàng (có chứa "TH" trong mã đơn)
+        final allOrders =
+            _filteredOrders
+                .where((order) => !order.orderNumber.contains('TH'))
+                .toList();
         allOrders.sort((a, b) => b.orderDate.compareTo(a.orderDate));
         return allOrders;
     }
@@ -2332,7 +2337,7 @@ class _OrdersScreenState extends State<OrdersScreen>
               child:
                   item.bookThumbnail.isNotEmpty
                       ? Image.network(
-                        'http://10.0.2.2:8080/storage/product/${item.bookThumbnail}',
+                        '${AppSession.baseUrlImg}${item.bookThumbnail}',
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return const Icon(

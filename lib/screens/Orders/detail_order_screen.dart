@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
+import 'package:heaven_book_app/model/checkout.dart';
 import 'package:heaven_book_app/model/order.dart';
 import 'package:heaven_book_app/model/order_item.dart';
 import 'package:heaven_book_app/model/status_order.dart';
@@ -624,7 +626,7 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
-                  'http://10.0.2.2:8000${item.bookThumbnail}',
+                  '${AppSession.baseUrlImg}${item.bookThumbnail}',
                   fit: BoxFit.cover,
                   errorBuilder:
                       (context, error, stackTrace) =>
@@ -793,7 +795,30 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
             Expanded(
               flex: 2,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  if (_order != null) {
+                    // Chuyển đổi OrderItem sang Checkout
+                    List<Checkout> checkoutItems =
+                        _order!.items.map((item) {
+                          return Checkout(
+                            bookId: item.bookId,
+                            bookTitle: item.bookTitle,
+                            bookThumbnail: item.bookThumbnail,
+                            unitPrice: item.unitPrice,
+                            quantity: item.quantity,
+                            saleOff:
+                                0.0, // Có thể tính từ unitPrice và totalPrice nếu cần
+                          );
+                        }).toList();
+
+                    // Điều hướng đến màn buy_now với dữ liệu
+                    Navigator.pushNamed(
+                      context,
+                      '/buy-now',
+                      arguments: {'items': checkoutItems},
+                    );
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryDark,
                   padding: const EdgeInsets.symmetric(vertical: 16),

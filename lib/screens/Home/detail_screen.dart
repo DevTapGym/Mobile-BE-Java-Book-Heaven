@@ -4,6 +4,7 @@ import 'package:heaven_book_app/bloc/book/book_event.dart';
 import 'package:heaven_book_app/bloc/book/book_state.dart';
 import 'package:heaven_book_app/bloc/cart/cart_bloc.dart';
 import 'package:heaven_book_app/bloc/cart/cart_event.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/checkout.dart';
 import 'package:heaven_book_app/themes/format_price.dart';
 import 'package:heaven_book_app/widgets/book_section_widget.dart';
@@ -197,10 +198,8 @@ class _DetailScreenState extends State<DetailScreen>
 
       // Gộp thumbnail + các ảnh phụ (giống trong phần hiển thị)
       final allImages = [
-        'http://10.0.2.2:8080/storage/Product/${book.thumbnail}',
-        ...book.images.map(
-          (img) => 'http://10.0.2.2:8080/storage/Product/${img.url}',
-        ),
+        '${AppSession.baseUrlImg}${book.thumbnail}',
+        ...book.images.map((img) => '${AppSession.baseUrlImg}${img.url}'),
       ];
 
       if (allImages.isEmpty) return;
@@ -415,10 +414,9 @@ class _DetailScreenState extends State<DetailScreen>
 
                         // Gộp tất cả ảnh (thumbnail + danh sách ảnh phụ)
                         final allImages = [
-                          'http://10.0.2.2:8080/storage/Product/${book.thumbnail}',
+                          '${AppSession.baseUrlImg}${book.thumbnail}',
                           ...book.images.map(
-                            (img) =>
-                                'http://10.0.2.2:8080/storage/Product/${img.url}',
+                            (img) => '${AppSession.baseUrlImg}${img.url}',
                           ),
                         ];
 
