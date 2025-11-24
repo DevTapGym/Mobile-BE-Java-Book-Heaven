@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/book.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
 import 'package:heaven_book_app/themes/format_price.dart';
@@ -134,7 +135,7 @@ class BookCard extends StatelessWidget {
                 child:
                     thumbnail != null && thumbnail!.isNotEmpty
                         ? Image.network(
-                          'http://10.0.2.2:8080/storage/Product/$thumbnail',
+                          '${AppSession.baseUrlImg}$thumbnail',
                           width: double.infinity,
                           height: 170,
                           fit: BoxFit.cover,

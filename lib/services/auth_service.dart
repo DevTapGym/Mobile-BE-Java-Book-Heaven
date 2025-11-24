@@ -58,25 +58,22 @@ class AuthService {
 
       // 5️⃣ Gửi thông tin đến Backend
       final response = await apiClient.publicDio.post(
-        '/auth/login-google',
-        data: {
-          "name": user.displayName,
-          "email": user.email,
-          "avatar": user.photoURL,
-          "firebase_token": idToken, // tùy backend có dùng hay không
-        },
+        '/auth/loginWithGoogle',
+        data: {"idToken": idToken},
       );
 
       if (response.statusCode == 200 && response.data['data'] != null) {
         final data = response.data['data'];
 
         // 6️⃣ Lưu Access Token
-        await _secureStorage.write(
-          key: 'access_token',
-          value: data['access_token'],
-        );
+        final accessToken = data['access_token'];
+        if (accessToken == null || accessToken.isEmpty) {
+          throw Exception('Không tìm thấy access_token trong phản hồi');
+        }
+        await _secureStorage.write(key: 'access_token', value: accessToken);
+        debugPrint('✅ Access token đã lưu sau Google login');
 
-        // 7️⃣ Lưu Refresh Token (nếu có)
+        // 7️⃣ Lưu Refresh Token từ cookie
         final setCookieHeader = response.headers['set-cookie'];
         if (setCookieHeader != null && setCookieHeader.isNotEmpty) {
           final refreshCookie = setCookieHeader
@@ -95,20 +92,9 @@ class AuthService {
           }
         }
 
-        final userData = data['account'] ?? {};
-        final isActiveValue = userData['is_active'] ?? false;
-        await _secureStorage.write(
-          key: 'is_active',
-          value: isActiveValue.toString(),
-        );
-
-        final isActive = userData['is_active'] == true;
         debugPrint('✅ Google login thành công: ${user.email}');
-        return {
-          'token': data['access_token'],
-          'user': userData,
-          'isActive': isActive,
-        };
+
+        return {'token': accessToken};
       } else {
         throw Exception(
           response.data['message'] ?? 'Đăng nhập Google thất bại',

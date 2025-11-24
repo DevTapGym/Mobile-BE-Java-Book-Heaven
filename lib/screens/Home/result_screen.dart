@@ -5,6 +5,7 @@ import 'package:heaven_book_app/bloc/book/book_event.dart';
 import 'package:heaven_book_app/bloc/book/book_state.dart';
 import 'package:heaven_book_app/bloc/category/category_bloc.dart';
 import 'package:heaven_book_app/bloc/category/category_state.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
 import 'package:heaven_book_app/model/book.dart';
 import 'package:heaven_book_app/themes/format_price.dart';
@@ -598,7 +599,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     child:
                         book.thumbnail.isNotEmpty
                             ? Image.network(
-                              'http://10.0.2.2:8080/storage/product/${book.thumbnail}',
+                              '${AppSession.baseUrlImg}${book.thumbnail}',
                               width: double.infinity,
                               height: 160,
                               fit: BoxFit.cover,
@@ -807,7 +808,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     child:
                         book.thumbnail.isNotEmpty
                             ? Image.network(
-                              'http://10.0.2.2:8080/storage/product/${book.thumbnail}',
+                              '${AppSession.baseUrlImg}${book.thumbnail}',
                               width: 100,
                               height: 160,
                               fit: BoxFit.cover,

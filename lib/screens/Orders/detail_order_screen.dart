@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/checkout.dart';
 import 'package:heaven_book_app/model/order.dart';
 import 'package:heaven_book_app/model/order_item.dart';
@@ -625,7 +626,7 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
-                  'http://10.0.2.2:8080/storage/product/${item.bookThumbnail}',
+                  '${AppSession.baseUrlImg}${item.bookThumbnail}',
                   fit: BoxFit.cover,
                   errorBuilder:
                       (context, error, stackTrace) =>

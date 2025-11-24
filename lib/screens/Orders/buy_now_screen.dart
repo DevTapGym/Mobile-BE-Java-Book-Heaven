@@ -10,6 +10,7 @@ import 'package:heaven_book_app/bloc/promotion/promotion_event.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_state.dart';
 import 'package:heaven_book_app/bloc/user/user_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_state.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/checkout.dart';
 import 'package:heaven_book_app/model/promotion.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
@@ -700,7 +701,7 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8.0),
                   child: Image.network(
-                    'http://10.0.2.2:8080/storage/product/$thumbnailUrl',
+                    '${AppSession.baseUrlImg}$thumbnailUrl',
                     fit: BoxFit.cover,
                     errorBuilder:
                         (context, error, stackTrace) => Icon(

@@ -10,6 +10,7 @@ import 'package:heaven_book_app/bloc/promotion/promotion_event.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_state.dart';
 import 'package:heaven_book_app/bloc/user/user_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_state.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/promotion.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
 import 'package:heaven_book_app/themes/format_price.dart';
@@ -683,7 +684,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8.0),
                   child: Image.network(
-                    'http://10.0.2.2:8080/storage/Product/$thumbnailUrl',
+                    '${AppSession.baseUrlImg}$thumbnailUrl',
                     fit: BoxFit.cover,
                     errorBuilder:
                         (context, error, stackTrace) => Icon(

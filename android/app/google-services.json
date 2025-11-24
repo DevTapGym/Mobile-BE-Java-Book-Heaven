@@ -1,20 +1,20 @@
 {
   "project_info": {
-    "project_number": "1024264519953",
-    "project_id": "book-heaven-b10a0",
-    "storage_bucket": "book-heaven-b10a0.firebasestorage.app"
+    "project_number": "679631373008",
+    "project_id": "bookstore-dc767",
+    "storage_bucket": "bookstore-dc767.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1024264519953:android:9ff612331801f9889c4cb0",
+        "mobilesdk_app_id": "1:679631373008:android:c8ee450ebf4bdead8294d5",
         "android_client_info": {
           "package_name": "com.example.heaven_book_app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1024264519953-fhact2r3a5jb5f02v2vcgkdauvmu4i99.apps.googleusercontent.com",
+          "client_id": "679631373008-hm0922ub4k0nvqrt30f9jqc2ua3e86ur.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.heaven_book_app",
@@ -22,24 +22,24 @@
           }
         },
         {
-          "client_id": "1024264519953-05mt45vcrtci26gd192gf98bbu42cb4c.apps.googleusercontent.com",
+          "client_id": "679631373008-r0ifq9ovr60suknbfnt5ahn6ja0l03q7.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyATiAVndOXs-yZsf-UEWFdGuNbxTAA_UlU"
+          "current_key": "AIzaSyCQ2spKpkQ6dVo67AmujJCe0ovTdk713g0"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1024264519953-05mt45vcrtci26gd192gf98bbu42cb4c.apps.googleusercontent.com",
+              "client_id": "679631373008-r0ifq9ovr60suknbfnt5ahn6ja0l03q7.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "1024264519953-njn38tn3i2ngv3i1q13if5p8a58pn8lv.apps.googleusercontent.com",
+              "client_id": "679631373008-uis8dnmd5f2kc304mqhmfspmuv850qmn.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
                 "bundle_id": "com.example.heavenBookApp"
