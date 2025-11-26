@@ -7,6 +7,11 @@ import 'package:heaven_book_app/bloc/cart/cart_event.dart';
 import 'package:heaven_book_app/bloc/category/category_bloc.dart';
 import 'package:heaven_book_app/bloc/category/category_event.dart';
 import 'package:heaven_book_app/bloc/category/category_state.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_bloc.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_event.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_state.dart';
+import 'package:heaven_book_app/bloc/user/user_bloc.dart';
+import 'package:heaven_book_app/bloc/user/user_event.dart';
 import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/book.dart';
 import 'package:heaven_book_app/model/category.dart';
@@ -34,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-
+    context.read<UserBloc>().add(LoadUserInfo());
     // Set up timer for auto-scrolling every 3 seconds
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
@@ -56,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Load dữ liệu
 
     _categoryBloc.add(LoadCategories());
+    context.read<SuggestBloc>().add(LoadSuggests('home'));
   }
 
   @override
@@ -797,24 +803,47 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 16),
 
-        BlocBuilder<BookBloc, BookState>(
+        // BlocBuilder<BookBloc, BookState>(
+        //   builder: (context, state) {
+        //     if (state is BookLoading) {
+        //       return const Center(child: CircularProgressIndicator());
+        //     } else if (state is BookLoaded) {
+        //       return SizedBox(
+        //         height: 320,
+        //         child: ListView.builder(
+        //           scrollDirection: Axis.horizontal,
+        //           itemCount: state.randomBooks.length,
+        //           padding: const EdgeInsets.only(right: 8),
+        //           itemBuilder: (context, index) {
+        //             final book = state.randomBooks[index];
+        //             return _buildRecommendedBookCard(book);
+        //           },
+        //         ),
+        //       );
+        //     } else if (state is BookError) {
+        //       return Text('Lỗi: ${state.message}');
+        //     }
+        //     return const SizedBox.shrink();
+        //   },
+        // ),
+        BlocBuilder<SuggestBloc, SuggestState>(
           builder: (context, state) {
-            if (state is BookLoading) {
+            if (state is SuggestLoading) {
               return const Center(child: CircularProgressIndicator());
-            } else if (state is BookLoaded) {
+            } else if (state is SuggestLoaded) {
               return SizedBox(
                 height: 320,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: state.randomBooks.length,
+                  itemCount: state.suggestions.length,
                   padding: const EdgeInsets.only(right: 8),
                   itemBuilder: (context, index) {
-                    final book = state.randomBooks[index];
+                    final book = state.suggestions[index];
                     return _buildRecommendedBookCard(book);
                   },
                 ),
               );
-            } else if (state is BookError) {
+            } else if (state is SuggestError) {
               return Text('Lỗi: ${state.message}');
             }
             return const SizedBox.shrink();
@@ -827,7 +856,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildRecommendedBookCard(Book book) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/detail', arguments: {'bookId': book.id});
+        context.read<SuggestBloc>().add(
+          FeedbackSuggest(action: book.id, position: 'home', evenType: 'view'),
+        );
+        Navigator.pushNamed(
+          context,
+          '/detail',
+          arguments: {'bookId': book.id, 'from': 'home'},
+        );
       },
       child: Container(
         width: 200,

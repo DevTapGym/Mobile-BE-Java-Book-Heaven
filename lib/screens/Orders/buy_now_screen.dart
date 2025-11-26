@@ -8,6 +8,8 @@ import 'package:heaven_book_app/bloc/order/order_state.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_bloc.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_event.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_state.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_bloc.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_event.dart';
 import 'package:heaven_book_app/bloc/user/user_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_state.dart';
 import 'package:heaven_book_app/interceptors/app_session.dart';
@@ -48,6 +50,8 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
   int? selectedPromotionId;
   bool showAllPromotions = false;
   final TextEditingController _noteController = TextEditingController();
+  String from = '';
+  String action = '';
 
   // Checkout items từ arguments
   List<Checkout> checkoutItems = [];
@@ -150,6 +154,8 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       if (args != null && args['items'] != null) {
         checkoutItems = args['items'] as List<Checkout>;
+        from = args['from'] ?? '';
+        action = args['action'] ?? '';
       }
     }
   }
@@ -1766,6 +1772,17 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
                                     'quantity': item.quantity,
                                   };
                                 }).toList();
+
+                            if (from == 'home' ||
+                                from == 'cart' && action != '') {
+                              context.read<SuggestBloc>().add(
+                                FeedbackSuggest(
+                                  action: int.parse(action),
+                                  position: from,
+                                  evenType: 'transaction',
+                                ),
+                              );
+                            }
 
                             // Dispatch CreateOrder event
                             context.read<OrderBloc>().add(

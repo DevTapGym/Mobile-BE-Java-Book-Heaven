@@ -4,6 +4,8 @@ import 'package:heaven_book_app/bloc/book/book_event.dart';
 import 'package:heaven_book_app/bloc/book/book_state.dart';
 import 'package:heaven_book_app/bloc/cart/cart_bloc.dart';
 import 'package:heaven_book_app/bloc/cart/cart_event.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_bloc.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_event.dart';
 import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/checkout.dart';
 import 'package:heaven_book_app/themes/format_price.dart';
@@ -990,6 +992,17 @@ class _DetailScreenState extends State<DetailScreen>
                   final state = context.read<BookBloc>().state;
                   if (state is BookDetailLoaded) {
                     final book = state.book;
+
+                    if (from == 'cart' || from == 'home') {
+                      context.read<SuggestBloc>().add(
+                        FeedbackSuggest(
+                          action: book.id,
+                          position: from,
+                          evenType: 'addtocart',
+                        ),
+                      );
+                    }
+
                     context.read<CartBloc>().add(
                       AddToCart(bookId: book.id, quantity: quantity),
                     );
@@ -1057,6 +1070,8 @@ class _DetailScreenState extends State<DetailScreen>
                             saleOff: book.saleOff,
                           ),
                         ],
+                        'from': from,
+                        'action': book.id.toString(),
                       },
                     );
                   }

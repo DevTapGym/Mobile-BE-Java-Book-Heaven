@@ -3,8 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heaven_book_app/bloc/cart/cart_bloc.dart';
 import 'package:heaven_book_app/bloc/cart/cart_event.dart';
 import 'package:heaven_book_app/bloc/cart/cart_state.dart';
-import 'package:heaven_book_app/bloc/user/user_bloc.dart';
-import 'package:heaven_book_app/bloc/user/user_state.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_bloc.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_event.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_state.dart';
 import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/book.dart';
 import 'package:heaven_book_app/model/cart_item.dart';
@@ -217,12 +218,12 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    final authState = context.read<UserBloc>().state;
 
-    if (authState is UserLoaded) {
-      final customerID = authState.userData.customer?.id;
-      context.read<CartBloc>().add(LoadCart(customerID!));
-    }
+    context.read<CartBloc>().add(
+      LoadCart(AppSession().currentUser!.customer!.id),
+    );
+
+    context.read<SuggestBloc>().add(LoadSuggests('home'));
   }
 
   @override
@@ -790,11 +791,11 @@ class _CartScreenState extends State<CartScreen> {
 
   // Widget for the recommended items grid
   Widget _buildRecommendedItemsGrid() {
-    return BlocBuilder<CartBloc, CartState>(
+    return BlocBuilder<SuggestBloc, SuggestState>(
       builder: (context, state) {
-        if (state is CartLoading) {
+        if (state is SuggestLoading) {
           return const Center(child: CircularProgressIndicator());
-        } else if (state is CartLoaded) {
+        } else if (state is SuggestLoaded) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: GridView.builder(
@@ -806,13 +807,13 @@ class _CartScreenState extends State<CartScreen> {
                 mainAxisSpacing: 16,
                 childAspectRatio: 0.55,
               ),
-              itemCount: state.relatedBooks.length,
+              itemCount: state.suggestions.length,
               itemBuilder:
                   (context, index) =>
-                      _buildRecommendedItem(state.relatedBooks[index]),
+                      _buildRecommendedItem(state.suggestions[index]),
             ),
           );
-        } else if (state is CartError) {
+        } else if (state is SuggestError) {
           return Center(child: Text('Error: ${state.message}'));
         }
         return const SizedBox.shrink();
@@ -824,7 +825,14 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildRecommendedItem(Book book) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/detail', arguments: {'bookId': book.id});
+        context.read<SuggestBloc>().add(
+          FeedbackSuggest(action: book.id, position: 'cart', evenType: 'view'),
+        );
+        Navigator.pushNamed(
+          context,
+          '/detail',
+          arguments: {'bookId': book.id, 'from': 'cart'},
+        );
       },
       child: Container(
         decoration: BoxDecoration(

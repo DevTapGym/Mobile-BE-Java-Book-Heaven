@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_event.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_event.dart';
+import 'package:heaven_book_app/services/suggest_service.dart';
 import 'firebase_options.dart';
 import 'package:heaven_book_app/bloc/auth/auth_bloc.dart';
 import 'package:heaven_book_app/bloc/auth/auth_state.dart';
@@ -56,6 +58,7 @@ Future<void> main() async {
   final bookRepository = BookService(apiClient);
   final orderService = OrderService(apiClient);
   final promotionService = PromotionService(apiClient);
+  final suggestService = SuggestService(apiClient);
 
   runApp(
     MultiBlocProvider(
@@ -76,6 +79,7 @@ Future<void> main() async {
         BlocProvider<PromotionBloc>(
           create: (_) => PromotionBloc(promotionService)..add(LoadPromotions()),
         ),
+        BlocProvider<SuggestBloc>(create: (_) => SuggestBloc(suggestService)),
       ],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {

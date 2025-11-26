@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:heaven_book_app/bloc/user/user_bloc.dart';
+import 'package:heaven_book_app/bloc/user/user_event.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
@@ -21,6 +23,7 @@ class _InitScreenState extends State<InitScreen> {
   void initState() {
     super.initState();
     _checkAutoLogin();
+    context.read<UserBloc>().add(LoadUserInfo());
   }
 
   Future<void> _checkAutoLogin() async {
