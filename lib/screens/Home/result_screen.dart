@@ -68,7 +68,7 @@ class _ResultScreenState extends State<ResultScreen> {
         if (type == 'search' && query != null) {
           context.read<BookBloc>().add(LoadSearchBooks(query));
         } else if (type == 'filter' && query != null) {
-          context.read<BookBloc>().add(LoadCategoryBooks(query));
+          context.read<BookBloc>().add(LoadProductTypeBooks(query));
         } else {
           context.read<BookBloc>().add(LoadBooks());
         }

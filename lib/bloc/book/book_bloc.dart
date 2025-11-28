@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:heaven_book_app/model/book.dart';
 import 'book_event.dart';
 import 'book_state.dart';
 import '../../services/book_service.dart';
@@ -12,6 +13,7 @@ class BookBloc extends Bloc<BookEvent, BookState> {
     on<LoadCategoryBooks>(_onLoadCategoryBooks);
     on<LoadAllBooks>(_onLoadAllBooks);
     on<LoadBookDetail>(_onLoadBookDetail);
+    on<LoadProductTypeBooks>(_onLoadProductTypeBooks);
   }
 
   Future<void> _onLoadBooks(LoadBooks event, Emitter<BookState> emit) async {
@@ -26,8 +28,11 @@ class BookBloc extends Bloc<BookEvent, BookState> {
       final allBooks = await bookService.getAllBooks();
 
       // Tạo các danh sách với thứ tự xáo trộn khác nhau
-      final popularBooks = [...allBooks]..shuffle();
-      final saleOffBooks = [...allBooks]..shuffle();
+      final popularBooks =
+          allBooks.where((book) => book.categories != null).toList();
+      final saleOffBooks =
+          allBooks.where((book) => book.categories == null).toList();
+
       final bannerBooks = allBooks;
       final randomBooks = [...allBooks]..shuffle();
 
@@ -53,6 +58,21 @@ class BookBloc extends Bloc<BookEvent, BookState> {
     try {
       final searchResults = await bookService.searchBooks(event.query);
       emit(BookSearchLoaded(searchResults));
+    } catch (e) {
+      emit(BookError(e.toString()));
+    }
+  }
+
+  Future<void> _onLoadProductTypeBooks(
+    LoadProductTypeBooks event,
+    Emitter<BookState> emit,
+  ) async {
+    emit(BookLoading());
+    try {
+      final categoryBooks = await bookService.getBooksByProductType(
+        event.productTypeName,
+      );
+      emit(BookCategoryLoaded(categoryBooks));
     } catch (e) {
       emit(BookError(e.toString()));
     }
@@ -93,10 +113,15 @@ class BookBloc extends Bloc<BookEvent, BookState> {
     emit(BookLoading());
     try {
       final bookDetail = await bookService.getBookDetail(event.id);
-      final relatedBooks = await bookService.getBooksByCategory(
-        bookDetail.categories.name,
-      );
-      //relatedBooks.removeWhere((book) => book.id == bookDetail.id);
+      List<Book> relatedBooks = [];
+
+      // Nếu có category thì mới load sách liên quan
+      if (bookDetail.categories != null) {
+        relatedBooks = await bookService.getBooksByCategory(
+          bookDetail.categories!.name,
+        );
+        //relatedBooks.removeWhere((book) => book.id == bookDetail.id);
+      }
       emit(BookDetailLoaded(book: bookDetail, relatedBooks: relatedBooks));
     } catch (e) {
       emit(BookError(e.toString()));

@@ -16,6 +16,13 @@ class LoadSearchBooks extends BookEvent {
   List<Object?> get props => [query];
 }
 
+class LoadProductTypeBooks extends BookEvent {
+  final String productTypeName;
+  LoadProductTypeBooks(this.productTypeName);
+  @override
+  List<Object?> get props => [productTypeName];
+}
+
 class LoadCategoryBooks extends BookEvent {
   final String categoryName;
   LoadCategoryBooks(this.categoryName);

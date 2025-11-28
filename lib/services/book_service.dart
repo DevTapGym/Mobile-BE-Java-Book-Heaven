@@ -60,30 +60,6 @@ class BookService {
     }
   }
 
-  Future<List<Book>> getRandomBooks() async {
-    try {
-      final response = await apiClient.publicDio.get('/book/random');
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data is Map<String, dynamic> && data['data'] is List) {
-          final List<dynamic> list = data['data'];
-          return list
-              .map((e) => Book.fromJson(Map<String, dynamic>.from(e)))
-              .toList();
-        } else {
-          throw Exception('Invalid API response format');
-        }
-      } else {
-        throw Exception(
-          'Failed to load books (status: ${response.statusCode})',
-        );
-      }
-    } catch (e) {
-      throw Exception('Error loading books: $e');
-    }
-  }
-
   Future<Book> getBookDetail(int id) async {
     try {
       final response = await apiClient.privateDio.get('/products/$id');
@@ -116,56 +92,6 @@ class BookService {
     }
   }
 
-  Future<List<Book>> getPopularBooks() async {
-    try {
-      final response = await apiClient.publicDio.get('/book/popular');
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-
-        if (data is Map<String, dynamic> && data['data'] is List) {
-          final List<dynamic> bookList = data['data'];
-          return bookList
-              .map((e) => Book.fromJson(Map<String, dynamic>.from(e)))
-              .toList();
-        } else {
-          throw Exception('Invalid API response format');
-        }
-      } else {
-        throw Exception(
-          'Failed to load popular books (status: ${response.statusCode})',
-        );
-      }
-    } catch (e) {
-      throw Exception('Error loading popular books: $e');
-    }
-  }
-
-  Future<List<Book>> getSaleOffBooks() async {
-    try {
-      final response = await apiClient.publicDio.get('/book/sale-off');
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-
-        if (data is Map<String, dynamic> && data['data'] is List) {
-          final List<dynamic> bookList = data['data'];
-          return bookList
-              .map((e) => Book.fromJson(Map<String, dynamic>.from(e)))
-              .toList();
-        } else {
-          throw Exception('Invalid API response format');
-        }
-      } else {
-        throw Exception(
-          'Failed to load popular books (status: ${response.statusCode})',
-        );
-      }
-    } catch (e) {
-      throw Exception('Error loading popular books: $e');
-    }
-  }
-
   Future<List<Book>> getBestSellingBooksInYear() async {
     try {
       final response = await apiClient.privateDio.get(
@@ -185,11 +111,11 @@ class BookService {
         }
       } else {
         throw Exception(
-          'Failed to load popular books (status: ${response.statusCode})',
+          'Failed to load Best Selling Books In Year (status: ${response.statusCode})',
         );
       }
     } catch (e) {
-      throw Exception('Error loading popular books: $e');
+      throw Exception('Error load Best Selling Books In Year books: $e');
     }
   }
 
@@ -251,6 +177,32 @@ class BookService {
         '/products?filter=category.name~\'$categoryName\'',
       );
 
+      if (response.statusCode == 200) {
+        final data = response.data;
+
+        if (data is Map<String, dynamic> && data['data']['result'] is List) {
+          final List<dynamic> bookList = data['data']['result'];
+          return bookList
+              .map((e) => Book.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
+        } else {
+          throw Exception('Invalid API response format');
+        }
+      } else {
+        throw Exception(
+          'Failed to load books by category (status: ${response.statusCode})',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error loading books by category: $e');
+    }
+  }
+
+  Future<List<Book>> getBooksByProductType(String productTypeName) async {
+    try {
+      final response = await apiClient.privateDio.get(
+        '/products?filter=productType.name~\'$productTypeName\'',
+      );
       if (response.statusCode == 200) {
         final data = response.data;
 

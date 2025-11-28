@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:heaven_book_app/model/payment.dart';
+import 'package:heaven_book_app/model/vn_pay_payment_method.dart';
 
 abstract class PaymentState extends Equatable {
   @override
@@ -10,13 +10,13 @@ class PaymentInitial extends PaymentState {}
 
 class PaymentLoading extends PaymentState {}
 
-class PaymentLoaded extends PaymentState {
-  final List<Payment> payments;
+class PaymentSuccess extends PaymentState {
+  final VnPayPaymentMethod response;
 
-  PaymentLoaded(this.payments);
+  PaymentSuccess(this.response);
 
   @override
-  List<Object?> get props => [payments];
+  List<Object?> get props => [response];
 }
 
 class PaymentError extends PaymentState {

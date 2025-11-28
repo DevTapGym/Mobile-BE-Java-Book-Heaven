@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:heaven_book_app/bloc/product_type/product_type_bloc.dart';
+import 'package:heaven_book_app/bloc/product_type/product_type_event.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_event.dart';
 import 'package:heaven_book_app/bloc/suggest/suggest_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_event.dart';
+import 'package:heaven_book_app/services/product_type_service.dart';
 import 'package:heaven_book_app/services/suggest_service.dart';
 import 'firebase_options.dart';
 import 'package:heaven_book_app/bloc/auth/auth_bloc.dart';
@@ -59,6 +62,7 @@ Future<void> main() async {
   final orderService = OrderService(apiClient);
   final promotionService = PromotionService(apiClient);
   final suggestService = SuggestService(apiClient);
+  final productTypeService = ProductTypeService(apiClient);
 
   runApp(
     MultiBlocProvider(
@@ -80,6 +84,11 @@ Future<void> main() async {
           create: (_) => PromotionBloc(promotionService)..add(LoadPromotions()),
         ),
         BlocProvider<SuggestBloc>(create: (_) => SuggestBloc(suggestService)),
+        BlocProvider<ProductTypeBloc>(
+          create:
+              (_) =>
+                  ProductTypeBloc(productTypeService)..add(LoadProductType()),
+        ),
       ],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
