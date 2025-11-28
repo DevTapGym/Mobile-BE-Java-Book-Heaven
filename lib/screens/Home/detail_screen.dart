@@ -969,141 +969,216 @@ class _DetailScreenState extends State<DetailScreen>
   }
 
   Widget _buildBottomBar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Row(
-          children: [
-            // Add to cart button
-            Expanded(
-              flex: 2,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  final state = context.read<BookBloc>().state;
-                  if (state is BookDetailLoaded) {
-                    final book = state.book;
+    return BlocBuilder<BookBloc, BookState>(
+      builder: (context, state) {
+        if (state is BookLoading) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (state is BookDetailLoaded) {
+          final book = state.book;
 
-                    if (from == 'cart' || from == 'home') {
-                      context.read<SuggestBloc>().add(
-                        FeedbackSuggest(
-                          action: book.id,
-                          position: from,
-                          evenType: 'addtocart',
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  // Add to cart button
+                  if (book.quantity > 0) ...[
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          final state = context.read<BookBloc>().state;
+                          if (state is BookDetailLoaded) {
+                            final book = state.book;
+
+                            if (from == 'cart' || from == 'home') {
+                              context.read<SuggestBloc>().add(
+                                FeedbackSuggest(
+                                  action: book.id,
+                                  position: from,
+                                  evenType: 'addtocart',
+                                ),
+                              );
+                            }
+
+                            context.read<CartBloc>().add(
+                              AddToCart(bookId: book.id, quantity: quantity),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${book.title} added to cart!'),
+                                duration: const Duration(seconds: 2),
+                                backgroundColor: AppColors.primaryDark,
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(
+                          Icons.add_shopping_cart,
+                          color: Colors.white,
+                          size: 20,
                         ),
-                      );
-                    }
-
-                    context.read<CartBloc>().add(
-                      AddToCart(bookId: book.id, quantity: quantity),
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${book.title} added to cart!'),
-                        duration: const Duration(seconds: 2),
-                        backgroundColor: AppColors.primaryDark,
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(
-                  Icons.add_shopping_cart,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                label: Text(
-                  //'Add to Cart',
-                  'Thêm vào giỏ hàng',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        offset: const Offset(0, 2),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(width: 12),
-
-            // Buy now button
-            Expanded(
-              flex: 2,
-              child: ElevatedButton(
-                onPressed: () {
-                  final state = context.read<BookBloc>().state;
-                  if (state is BookDetailLoaded) {
-                    final book = state.book;
-                    Navigator.pushNamed(
-                      context,
-                      '/buy-now',
-                      arguments: {
-                        'items': [
-                          Checkout(
-                            bookId: book.id,
-                            bookTitle: book.title,
-                            bookThumbnail: book.thumbnail,
-                            unitPrice: book.price,
-                            quantity: quantity,
-                            saleOff: book.saleOff,
+                        label: Text(
+                          //'Add to Cart',
+                          'Thêm vào giỏ hàng',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                offset: const Offset(0, 2),
+                                blurRadius: 4,
+                              ),
+                            ],
                           ),
-                        ],
-                        'from': from,
-                        'action': book.id.toString(),
-                      },
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryDark,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  //'Buy Now',
-                  'Mua ngay',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        offset: const Offset(0, 2),
-                        blurRadius: 4,
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    // Buy now button
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final state = context.read<BookBloc>().state;
+                          if (state is BookDetailLoaded) {
+                            final book = state.book;
+                            Navigator.pushNamed(
+                              context,
+                              '/buy-now',
+                              arguments: {
+                                'items': [
+                                  Checkout(
+                                    bookId: book.id,
+                                    bookTitle: book.title,
+                                    bookThumbnail: book.thumbnail,
+                                    unitPrice: book.price,
+                                    quantity: quantity,
+                                    saleOff: book.saleOff,
+                                  ),
+                                ],
+                                'from': from,
+                                'action': book.id.toString(),
+                              },
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryDark,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          //'Buy Now',
+                          'Mua ngay',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                offset: const Offset(0, 2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 18,
+                          horizontal: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.red.withOpacity(0.1),
+                              Colors.red.withOpacity(0.05),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          border: Border.all(
+                            color: Colors.red.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red.shade700,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'Hết hàng rồi - quay lại sau nhé!',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.red.shade700,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          );
+        }
+        return Container(
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: const Text(
+            'Error loading book details.',
+            style: TextStyle(color: Colors.red),
+          ),
+        );
+      },
     );
   }
 

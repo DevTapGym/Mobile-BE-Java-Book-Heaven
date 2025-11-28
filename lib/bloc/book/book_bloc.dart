@@ -19,15 +19,8 @@ class BookBloc extends Bloc<BookEvent, BookState> {
   Future<void> _onLoadBooks(LoadBooks event, Emitter<BookState> emit) async {
     emit(BookLoading());
     try {
-      // final popularBooks = await bookService.getPopularBooks();
-      // final saleOffBooks = await bookService.getSaleOffBooks();
       final bestSellingBooks = await bookService.getBestSellingBooksInYear();
-      // final bannerBooks = await bookService.getBannerBooks();
-      // final randomBooks = await bookService.getRandomBooks();
-
       final allBooks = await bookService.getAllBooks();
-
-      // Tạo các danh sách với thứ tự xáo trộn khác nhau
       final popularBooks =
           allBooks.where((book) => book.categories != null).toList();
       final saleOffBooks =
@@ -120,7 +113,10 @@ class BookBloc extends Bloc<BookEvent, BookState> {
         relatedBooks = await bookService.getBooksByCategory(
           bookDetail.categories!.name,
         );
-        //relatedBooks.removeWhere((book) => book.id == bookDetail.id);
+      } else {
+        relatedBooks = await bookService.getBooksByProductType(
+          bookDetail.productTypes!.name,
+        );
       }
       emit(BookDetailLoaded(book: bookDetail, relatedBooks: relatedBooks));
     } catch (e) {

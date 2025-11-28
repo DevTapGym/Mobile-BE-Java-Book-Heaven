@@ -5,6 +5,8 @@ import 'package:heaven_book_app/bloc/book/book_event.dart';
 import 'package:heaven_book_app/bloc/book/book_state.dart';
 import 'package:heaven_book_app/bloc/category/category_bloc.dart';
 import 'package:heaven_book_app/bloc/category/category_state.dart';
+import 'package:heaven_book_app/bloc/product_type/product_type_bloc.dart';
+import 'package:heaven_book_app/bloc/product_type/product_type_state.dart';
 import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
 import 'package:heaven_book_app/model/book.dart';
@@ -31,6 +33,7 @@ class _ResultScreenState extends State<ResultScreen> {
   String _selectedViewType = 'grid';
   final TextEditingController _searchController = TextEditingController();
   bool _isInitialized = false;
+  String _selectedProductType = 'All';
   String _selectedCategory = 'All';
   bool _categoryInitialized = false;
 
@@ -314,23 +317,23 @@ class _ResultScreenState extends State<ResultScreen> {
 
           const SizedBox(height: 12),
 
-          // Category and Sort Row
+          // Product Type and Sort Row
           Row(
             children: [
-              // Category Filter
+              // Product Type Filter
               Expanded(
-                child: BlocBuilder<CategoryBloc, CategoryState>(
+                child: BlocBuilder<ProductTypeBloc, ProductTypeState>(
                   builder: (context, state) {
-                    List<String> categoryNames = ['All'];
+                    List<String> productTypeNames = ['All'];
 
-                    if (state is CategoryLoaded) {
-                      categoryNames.addAll(
-                        state.categories
-                            .map((category) => category.name)
+                    if (state is ProductTypeLoaded) {
+                      productTypeNames.addAll(
+                        state.productTypes
+                            .map((productType) => productType.name)
                             .toList(),
                       );
 
-                      // Kiểm tra xem có cần cập nhật selected category từ arguments không
+                      // Kiểm tra xem có cần cập nhật selected product type từ arguments không
                       final args =
                           ModalRoute.of(context)?.settings.arguments
                               as Map<String, dynamic>?;
@@ -338,19 +341,19 @@ class _ResultScreenState extends State<ResultScreen> {
                           args['type'] == 'filter' &&
                           args['query'] != null &&
                           !_categoryInitialized) {
-                        final categoryName = args['query'] as String;
-                        final matchedCategories = state.categories.where(
-                          (cat) => cat.name == categoryName,
+                        final productTypeName = args['query'] as String;
+                        final matchedProductTypes = state.productTypes.where(
+                          (pt) => pt.name == productTypeName,
                         );
-                        final matchedCategory =
-                            matchedCategories.isNotEmpty
-                                ? matchedCategories.first
+                        final matchedProductType =
+                            matchedProductTypes.isNotEmpty
+                                ? matchedProductTypes.first
                                 : null;
-                        if (matchedCategory != null) {
+                        if (matchedProductType != null) {
                           WidgetsBinding.instance.addPostFrameCallback((_) {
                             if (mounted) {
                               setState(() {
-                                _selectedCategory = matchedCategory.name;
+                                _selectedProductType = matchedProductType.name;
                                 _categoryInitialized = true;
                               });
                             }
@@ -359,17 +362,17 @@ class _ResultScreenState extends State<ResultScreen> {
                       }
                     }
 
-                    // Chỉ reset về 'All' nếu _selectedCategory thực sự không hợp lệ
-                    // và đã hoàn tất quá trình khởi tạo
-                    if (!categoryNames.contains(_selectedCategory) &&
-                        state is CategoryLoaded &&
+                    // Chỉ reset về 'All' nếu _selectedProductType thực sự không hợp lệ
+                    if (!productTypeNames.contains(_selectedProductType) &&
+                        state is ProductTypeLoaded &&
                         _categoryInitialized) {
-                      _selectedCategory = 'All';
+                      _selectedProductType = 'All';
                     }
 
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.05),
                         border: Border.all(
                           color: AppColors.primary.withValues(alpha: 0.3),
                         ),
@@ -377,45 +380,37 @@ class _ResultScreenState extends State<ResultScreen> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: _selectedCategory,
+                          value: _selectedProductType,
                           icon: const Icon(
                             Icons.keyboard_arrow_down,
                             color: AppColors.primaryDark,
                           ),
                           items:
-                              categoryNames.map((category) {
+                              productTypeNames.map((productType) {
                                 return DropdownMenuItem(
-                                  value: category,
-                                  child: Text(category),
+                                  value: productType,
+                                  child: Text(
+                                    productType,
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
                                 );
                               }).toList(),
                           onChanged: (value) {
                             setState(() {
-                              _selectedCategory = value!;
+                              _selectedProductType = value!;
+                              _selectedCategory =
+                                  'All'; // Reset category khi đổi product type
                               _categoryInitialized = true;
 
-                              // Thực hiện filtering theo category
-                              if (_selectedCategory == 'All') {
+                              // Thực hiện filtering theo product type
+                              if (_selectedProductType == 'All') {
                                 // Load tất cả sách
                                 context.read<BookBloc>().add(LoadAllBooks());
                               } else {
-                                // Tìm category ID từ CategoryBloc state
-                                final categoryState =
-                                    context.read<CategoryBloc>().state;
-                                if (categoryState is CategoryLoaded) {
-                                  final selectedCategoryObj = categoryState
-                                      .categories
-                                      .firstWhere(
-                                        (cat) => cat.name == _selectedCategory,
-                                        orElse:
-                                            () =>
-                                                categoryState.categories.first,
-                                      );
-                                  // Load sách theo category name
-                                  context.read<BookBloc>().add(
-                                    LoadCategoryBooks(selectedCategoryObj.name),
-                                  );
-                                }
+                                // Load sách theo product type name
+                                context.read<BookBloc>().add(
+                                  LoadProductTypeBooks(_selectedProductType),
+                                );
                               }
                             });
                           },
@@ -426,13 +421,14 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
               ),
 
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
 
               // Sort Filter
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.05),
                     border: Border.all(
                       color: AppColors.primary.withValues(alpha: 0.3),
                     ),
@@ -466,6 +462,90 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
             ],
           ),
+
+          // Category Filter (chỉ hiển thị khi chọn Product Type là "Sách")
+          if (_selectedProductType == 'Sách') ...[
+            const SizedBox(height: 12),
+            BlocBuilder<CategoryBloc, CategoryState>(
+              builder: (context, state) {
+                List<String> categoryNames = ['All'];
+
+                if (state is CategoryLoaded) {
+                  categoryNames.addAll(
+                    state.categories.map((category) => category.name).toList(),
+                  );
+                }
+
+                // Reset category về 'All' nếu không tồn tại
+                if (!categoryNames.contains(_selectedCategory)) {
+                  _selectedCategory = 'All';
+                }
+
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.05),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text(
+                        'Thể loại:',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedCategory,
+                            icon: const Icon(
+                              Icons.keyboard_arrow_down,
+                              color: AppColors.primaryDark,
+                            ),
+                            items:
+                                categoryNames.map((category) {
+                                  return DropdownMenuItem(
+                                    value: category,
+                                    child: Text(
+                                      category,
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  );
+                                }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedCategory = value!;
+
+                                // Thực hiện filtering theo category
+                                if (_selectedCategory == 'All') {
+                                  // Load lại theo product type
+                                  context.read<BookBloc>().add(
+                                    LoadProductTypeBooks(_selectedProductType),
+                                  );
+                                } else {
+                                  // Load sách theo category name
+                                  context.read<BookBloc>().add(
+                                    LoadCategoryBooks(_selectedCategory),
+                                  );
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
         ],
       ),
     );
@@ -512,6 +592,7 @@ class _ResultScreenState extends State<ResultScreen> {
             onPressed: () {
               setState(() {
                 _searchController.clear();
+                _selectedProductType = 'All';
                 _selectedCategory = 'All';
                 // Load lại tất cả sách khi clear filters
                 context.read<BookBloc>().add(LoadAllBooks());
