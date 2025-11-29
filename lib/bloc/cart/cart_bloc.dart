@@ -42,7 +42,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
           event.cartItemId,
           event.newQuantity,
         );
-        final updatedCart = await _cartService.getMyCart(1);
+        final updatedCart = await _cartService.getMyCart(
+          AppSession().currentUser!.customer!.id,
+        );
         emit(
           CartLoaded(
             cart: updatedCart,
@@ -61,7 +63,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       emit(CartLoading());
       try {
         await _cartService.addToCart(event.bookId, event.quantity);
-        final updatedCart = await _cartService.getMyCart(1);
+        final updatedCart = await _cartService.getMyCart(
+          AppSession().currentUser!.customer!.id,
+        );
         emit(
           CartLoaded(
             cart: updatedCart,
@@ -83,7 +87,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       emit(CartLoading());
       try {
         await _cartService.removeCartItem(event.cartItemId);
-        final updatedCart = await _cartService.getMyCart(1);
+        final updatedCart = await _cartService.getMyCart(
+          AppSession().currentUser!.customer!.id,
+        );
         emit(
           CartLoaded(
             cart: updatedCart,

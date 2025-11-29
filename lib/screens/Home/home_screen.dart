@@ -6,10 +6,16 @@ import 'package:heaven_book_app/bloc/cart/cart_bloc.dart';
 import 'package:heaven_book_app/bloc/cart/cart_event.dart';
 import 'package:heaven_book_app/bloc/category/category_bloc.dart';
 import 'package:heaven_book_app/bloc/category/category_event.dart';
-import 'package:heaven_book_app/bloc/category/category_state.dart';
+import 'package:heaven_book_app/bloc/product_type/product_type_bloc.dart';
+import 'package:heaven_book_app/bloc/product_type/product_type_state.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_bloc.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_event.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_state.dart';
+import 'package:heaven_book_app/bloc/user/user_bloc.dart';
+import 'package:heaven_book_app/bloc/user/user_event.dart';
 import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/book.dart';
-import 'package:heaven_book_app/model/category.dart';
+import 'package:heaven_book_app/model/product_type.dart';
 import 'package:heaven_book_app/services/category_service.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
 import 'package:heaven_book_app/themes/format_price.dart';
@@ -34,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-
+    context.read<UserBloc>().add(LoadUserInfo());
     // Set up timer for auto-scrolling every 3 seconds
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
@@ -56,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Load dữ liệu
 
     _categoryBloc.add(LoadCategories());
+    context.read<SuggestBloc>().add(LoadSuggests('home'));
   }
 
   @override
@@ -109,7 +116,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Categories Section
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _buildCategoriesSection(),
+                      //child: _buildCategoriesSection(),
+                      child: _buildProductTypeSection(),
                     ),
                     const SizedBox(height: 24),
 
@@ -153,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           } else if (state is BookLoaded) {
                             return BookSectionWidget(
                               //title: 'Books on Sale',
-                              title: 'Sách Giảm Giá\nKhông Mua Đừng Tiếc Nhá',
+                              title: 'Đồ văn phòng \nphẩm ở đây, quẹo lựa',
                               books: state.saleOffBooks,
                               onViewAll: () {},
                               onBookTap: (book) {
@@ -675,15 +683,38 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategoriesSection() {
-    return BlocBuilder<CategoryBloc, CategoryState>(
+  // Widget _buildCategoriesSection() {
+  //   return BlocBuilder<CategoryBloc, CategoryState>(
+  //     builder: (context, state) {
+  //       return Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           const Text(
+  //             //'Categories',
+  //             'Bạn mua gì ?',
+  //             style: TextStyle(
+  //               fontSize: 20,
+  //               fontWeight: FontWeight.bold,
+  //               color: AppColors.text,
+  //             ),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           SizedBox(height: 100, child: _buildCategoriesList(state)),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+
+  Widget _buildProductTypeSection() {
+    return BlocBuilder<ProductTypeBloc, ProductTypeState>(
       builder: (context, state) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               //'Categories',
-              'Thể Loại Sách',
+              'Bạn mua gì ?',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -691,7 +722,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            SizedBox(height: 100, child: _buildCategoriesList(state)),
+            SizedBox(height: 100, child: _buildProductTypeList(state)),
           ],
         );
       },
@@ -797,24 +828,47 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 16),
 
-        BlocBuilder<BookBloc, BookState>(
+        // BlocBuilder<BookBloc, BookState>(
+        //   builder: (context, state) {
+        //     if (state is BookLoading) {
+        //       return const Center(child: CircularProgressIndicator());
+        //     } else if (state is BookLoaded) {
+        //       return SizedBox(
+        //         height: 320,
+        //         child: ListView.builder(
+        //           scrollDirection: Axis.horizontal,
+        //           itemCount: state.randomBooks.length,
+        //           padding: const EdgeInsets.only(right: 8),
+        //           itemBuilder: (context, index) {
+        //             final book = state.randomBooks[index];
+        //             return _buildRecommendedBookCard(book);
+        //           },
+        //         ),
+        //       );
+        //     } else if (state is BookError) {
+        //       return Text('Lỗi: ${state.message}');
+        //     }
+        //     return const SizedBox.shrink();
+        //   },
+        // ),
+        BlocBuilder<SuggestBloc, SuggestState>(
           builder: (context, state) {
-            if (state is BookLoading) {
+            if (state is SuggestLoading) {
               return const Center(child: CircularProgressIndicator());
-            } else if (state is BookLoaded) {
+            } else if (state is SuggestLoaded) {
               return SizedBox(
                 height: 320,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: state.randomBooks.length,
+                  itemCount: state.suggestions.length,
                   padding: const EdgeInsets.only(right: 8),
                   itemBuilder: (context, index) {
-                    final book = state.randomBooks[index];
+                    final book = state.suggestions[index];
                     return _buildRecommendedBookCard(book);
                   },
                 ),
               );
-            } else if (state is BookError) {
+            } else if (state is SuggestError) {
               return Text('Lỗi: ${state.message}');
             }
             return const SizedBox.shrink();
@@ -827,7 +881,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildRecommendedBookCard(Book book) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/detail', arguments: {'bookId': book.id});
+        context.read<SuggestBloc>().add(
+          FeedbackSuggest(action: book.id, position: 'home', evenType: 'view'),
+        );
+        Navigator.pushNamed(
+          context,
+          '/detail',
+          arguments: {'bookId': book.id, 'from': 'home'},
+        );
       },
       child: Container(
         width: 200,
@@ -1567,11 +1628,114 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategoriesList(CategoryState state) {
-    if (state is CategoryLoading) {
+  // Widget _buildCategoriesList(CategoryState state) {
+  //   if (state is CategoryLoading) {
+  //     return const Center(child: CircularProgressIndicator());
+  //   } else if (state is CategoryLoaded) {
+  //     if (state.categories.isEmpty) {
+  //       return const Center(
+  //         child: Text(
+  //           'Không có danh mục nào.',
+  //           style: TextStyle(color: AppColors.text),
+  //         ),
+  //       );
+  //     }
+  //     return ListView.builder(
+  //       scrollDirection: Axis.horizontal,
+  //       itemCount: state.categories.length,
+  //       itemBuilder: (context, index) {
+  //         final category = state.categories[index];
+  //         return _buildCategoryItem(category, index);
+  //       },
+  //     );
+  //   } else if (state is CategoryError) {
+  //     return Center(
+  //       child: Text(
+  //         'Lỗi: ${state.message}',
+  //         style: const TextStyle(color: Colors.red),
+  //       ),
+  //     );
+  //   }
+  //   return const SizedBox.shrink();
+  // }
+
+  // Widget _buildCategoryItem(Category category, int index) {
+  //   final List<IconData> categoryIcons = [
+  //     Icons.auto_stories,
+  //     Icons.science,
+  //     Icons.history_edu,
+  //     Icons.psychology,
+  //     Icons.architecture_sharp,
+  //     Icons.business_center,
+  //     Icons.child_care_outlined,
+  //     Icons.sports_esports,
+  //     Icons.restaurant_menu,
+  //     Icons.travel_explore,
+  //   ];
+
+  //   // Lấy icon theo index, nếu vượt quá thì lặp lại
+  //   final icon = categoryIcons[index % categoryIcons.length];
+
+  //   return Container(
+  //     width: 80,
+  //     margin: const EdgeInsets.only(right: 12),
+  //     child: GestureDetector(
+  //       onTap: () {
+  //         Navigator.push(
+  //           context,
+  //           MaterialPageRoute(
+  //             builder:
+  //                 (context) => BlocProvider.value(
+  //                   value: _categoryBloc,
+  //                   child: const ResultScreen(),
+  //                 ),
+  //             settings: RouteSettings(
+  //               arguments: {'type': 'filter', 'query': category.name},
+  //             ),
+  //           ),
+  //         );
+  //       },
+  //       child: Column(
+  //         children: [
+  //           Container(
+  //             width: 60,
+  //             height: 60,
+  //             decoration: BoxDecoration(
+  //               color: AppColors.card,
+  //               borderRadius: BorderRadius.circular(16),
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: Colors.black.withValues(alpha: 0.2),
+  //                   blurRadius: 4,
+  //                   offset: const Offset(2, 2),
+  //                 ),
+  //               ],
+  //             ),
+  //             child: Icon(icon, color: AppColors.primaryDark, size: 28),
+  //           ),
+  //           const SizedBox(height: 8),
+  //           Text(
+  //             category.name,
+  //             style: const TextStyle(
+  //               fontSize: 12,
+  //               fontWeight: FontWeight.w500,
+  //               color: AppColors.text,
+  //             ),
+  //             textAlign: TextAlign.center,
+  //             maxLines: 1,
+  //             overflow: TextOverflow.ellipsis,
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  Widget _buildProductTypeList(ProductTypeState state) {
+    if (state is ProductTypeLoading) {
       return const Center(child: CircularProgressIndicator());
-    } else if (state is CategoryLoaded) {
-      if (state.categories.isEmpty) {
+    } else if (state is ProductTypeLoaded) {
+      if (state.productTypes.isEmpty) {
         return const Center(
           child: Text(
             'Không có danh mục nào.',
@@ -1581,13 +1745,13 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       return ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: state.categories.length,
+        itemCount: state.productTypes.length,
         itemBuilder: (context, index) {
-          final category = state.categories[index];
-          return _buildCategoryItem(category, index);
+          final productTypes = state.productTypes[index];
+          return _buildProductTypeItem(productTypes, index);
         },
       );
-    } else if (state is CategoryError) {
+    } else if (state is ProductTypeError) {
       return Center(
         child: Text(
           'Lỗi: ${state.message}',
@@ -1598,8 +1762,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return const SizedBox.shrink();
   }
 
-  Widget _buildCategoryItem(Category category, int index) {
-    final List<IconData> categoryIcons = [
+  Widget _buildProductTypeItem(ProductType category, int index) {
+    final List<IconData> productTypeIcons = [
       Icons.auto_stories,
       Icons.science,
       Icons.history_edu,
@@ -1613,7 +1777,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     // Lấy icon theo index, nếu vượt quá thì lặp lại
-    final icon = categoryIcons[index % categoryIcons.length];
+    final icon = productTypeIcons[index % productTypeIcons.length];
 
     return Container(
       width: 80,

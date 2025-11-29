@@ -39,6 +39,13 @@ class BookCategoryLoaded extends BookState {
   List<Object?> get props => [categoryBooks];
 }
 
+class BookProductTypeLoaded extends BookState {
+  final List<Book> productTypeBooks;
+  BookProductTypeLoaded(this.productTypeBooks);
+  @override
+  List<Object?> get props => [productTypeBooks];
+}
+
 class BookLoaded extends BookState {
   final List<Book> popularBooks;
   final List<Book> saleOffBooks;

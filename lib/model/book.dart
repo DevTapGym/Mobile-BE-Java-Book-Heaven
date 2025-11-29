@@ -1,6 +1,7 @@
 import 'package:heaven_book_app/model/book_feature.dart';
 import 'package:heaven_book_app/model/book_image.dart';
 import 'package:heaven_book_app/model/category.dart';
+import 'package:heaven_book_app/model/product_type.dart';
 
 class Book {
   final int id;
@@ -13,9 +14,10 @@ class Book {
   final int sold;
   final double saleOff;
   final bool isActive;
-  final Category categories;
+  final Category? categories;
   final List<BookImage> images;
   final List<BookFeature> features;
+  final ProductType? productTypes;
 
   Book({
     required this.id,
@@ -28,9 +30,10 @@ class Book {
     required this.saleOff,
     required this.isActive,
     this.description,
-    required this.categories,
+    this.categories,
     this.images = const [],
     this.features = const [],
+    this.productTypes,
   });
 
   factory Book.fromJson(Map<String, dynamic> json) {
@@ -54,7 +57,7 @@ class Book {
       categories:
           json['category'] != null
               ? Category.fromJson(Map<String, dynamic>.from(json['category']))
-              : Category(id: 0, name: 'Unknown'),
+              : null,
 
       // Xử lý images - BE trả về 'productImages' (array)
       images:
@@ -69,6 +72,13 @@ class Book {
               ?.map((e) => BookFeature.fromJson(Map<String, dynamic>.from(e)))
               .toList() ??
           [],
+
+      productTypes:
+          json['productType'] != null
+              ? ProductType.fromJson(
+                Map<String, dynamic>.from(json['productType']),
+              )
+              : null,
     );
   }
 }

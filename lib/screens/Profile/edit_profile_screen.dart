@@ -421,7 +421,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 ),
                                 SizedBox(height: 8.0),
                                 _buildGenderSelector(),
-                                SizedBox(height: 40.0),
+                                SizedBox(height: 16.0),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: Colors.black54,
+                                    ),
+                                    SizedBox(width: 8.0),
+                                    Expanded(
+                                      child: Text(
+                                        //'Email cannot be changed',
+                                        'Cập nhật thông tin cá nhân giúp thống có thể gợi ý sản phẩm phù hợp hơn.',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 16.0),
                               ],
                             ),
                           ),

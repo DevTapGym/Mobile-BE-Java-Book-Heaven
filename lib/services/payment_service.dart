@@ -1,11 +1,29 @@
 import 'package:flutter/widgets.dart';
 import 'package:heaven_book_app/model/payment.dart';
+import 'package:heaven_book_app/model/vn_pay_payment_method.dart';
 import 'package:heaven_book_app/services/api_client.dart';
 
 class PaymentService {
   final ApiClient apiClient;
 
   PaymentService(this.apiClient);
+
+  Future<VnPayPaymentMethod> createVnPayPayment({
+    required int amount,
+    String? bankCode,
+  }) async {
+    try {
+      final response = await apiClient.privateDio.get(
+        '/payment/vn-pay',
+        queryParameters: {"amount": amount, "bankCode": bankCode ?? ""},
+      );
+
+      final data = response.data["data"];
+      return VnPayPaymentMethod.fromJson(data);
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   Future<List<Payment>> getPaymentMethods() async {
     try {

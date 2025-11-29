@@ -5,4 +5,12 @@ abstract class PaymentEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadPaymentMethods extends PaymentEvent {}
+class CreateVNPayPaymentEvent extends PaymentEvent {
+  final int amount;
+  final String? bankCode;
+
+  CreateVNPayPaymentEvent({required this.amount, this.bankCode});
+
+  @override
+  List<Object?> get props => [amount, bankCode];
+}

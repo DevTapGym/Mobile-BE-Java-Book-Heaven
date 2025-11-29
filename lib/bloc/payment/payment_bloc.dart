@@ -4,22 +4,25 @@ import 'package:heaven_book_app/bloc/payment/payment_state.dart';
 import 'package:heaven_book_app/services/payment_service.dart';
 
 class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
-  final PaymentService _service;
+  final PaymentService _paymentService;
 
-  PaymentBloc(this._service) : super(PaymentInitial()) {
-    on<LoadPaymentMethods>(_onLoadPaymentMethods);
+  PaymentBloc(this._paymentService) : super(PaymentInitial()) {
+    on<CreateVNPayPaymentEvent>(_createVNPayPayment);
   }
 
-  Future<void> _onLoadPaymentMethods(
-    LoadPaymentMethods event,
+  Future<void> _createVNPayPayment(
+    CreateVNPayPaymentEvent event,
     Emitter<PaymentState> emit,
   ) async {
     emit(PaymentLoading());
     try {
-      final payments = await _service.getPaymentMethods();
-      emit(PaymentLoaded(payments));
+      final res = await _paymentService.createVnPayPayment(
+        amount: event.amount,
+        bankCode: event.bankCode,
+      );
+      emit(PaymentSuccess(res));
     } catch (e) {
-      emit(PaymentError(e.toString()));
+      emit(PaymentError('Failed to create VNPay payment: $e'));
     }
   }
 }
