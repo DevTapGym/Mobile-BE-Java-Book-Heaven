@@ -345,6 +345,11 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
   Widget _shippingAddressSection() {
     if (_order == null) return const SizedBox.shrink();
 
+    // Kiểm tra có địa chỉ và số điện thoại không
+    bool hasPhone = _order!.receiverPhone.isNotEmpty;
+    bool hasAddress = _order!.receiverAddress.isNotEmpty;
+    bool isOnlineOrder = hasPhone && hasAddress;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -363,31 +368,48 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // Tên người nhận
+              // Tên người nhận - luôn hiển thị
               _buildInfoRow(
                 icon: Icons.person_outline,
                 label: 'Người nhận',
                 value: _order!.receiverName,
               ),
 
-              const SizedBox(height: 16),
+              // Số điện thoại - chỉ hiển thị nếu có
+              if (hasPhone) ...[
+                const SizedBox(height: 16),
+                _buildInfoRow(
+                  icon: Icons.phone_outlined,
+                  label: 'Số điện thoại',
+                  value: _order!.receiverPhone,
+                ),
+              ],
 
-              // Số điện thoại
-              _buildInfoRow(
-                icon: Icons.phone_outlined,
-                label: 'Số điện thoại',
-                value: _order!.receiverPhone,
-              ),
+              // Địa chỉ - chỉ hiển thị nếu có
+              if (hasAddress) ...[
+                const SizedBox(height: 16),
+                _buildInfoRow(
+                  icon: Icons.location_on_outlined,
+                  label: 'Địa chỉ giao hàng',
+                  value: _order!.receiverAddress,
+                  isMultiline: true,
+                ),
+              ],
 
-              const SizedBox(height: 16),
-
-              // Địa chỉ
-              _buildInfoRow(
-                icon: Icons.location_on_outlined,
-                label: 'Địa chỉ giao hàng',
-                value: _order!.receiverAddress,
-                isMultiline: true,
-              ),
+              // Chú thích "Mua tại quầy" nếu không phải đơn online
+              if (!isOnlineOrder) ...[
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.grey[600], size: 20),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Mua tại quầy',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -527,6 +549,11 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
   Widget _orderDetailsSection() {
     if (_order == null) return const SizedBox.shrink();
 
+    // Kiểm tra nếu có địa chỉ và số điện thoại thì là mua online
+    bool isOnline =
+        _order!.receiverAddress.isNotEmpty && _order!.receiverPhone.isNotEmpty;
+    String purchaseLocation = isOnline ? 'Mua online' : 'Mua tại quầy';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -551,6 +578,11 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
               //'Order Date:',
               'Ngày đặt hàng:',
               '${_order!.orderDate.hour}:${_order!.orderDate.minute} ${_order!.orderDate.day}-${_order!.orderDate.month}-${_order!.orderDate.year}',
+            ),
+            _buildDetailRow(
+              //'Payment Method:',
+              'Nơi mua:',
+              purchaseLocation,
             ),
             _buildDetailRow(
               //'Payment Method:',
@@ -717,24 +749,27 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 150,
+          Expanded(
+            flex: 4,
             child: Text(
-              softWrap: true,
               label,
               style: const TextStyle(color: Colors.black54, fontSize: 15),
             ),
           ),
-          SizedBox(
-            width: 180,
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 6,
             child: Text(
               value,
               textAlign: TextAlign.right,
-              softWrap: true,
-              overflow: TextOverflow.visible,
-              style: const TextStyle(color: Colors.black54, fontSize: 15),
+              style: const TextStyle(
+                color: AppColors.black60,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
             ),
           ),
         ],

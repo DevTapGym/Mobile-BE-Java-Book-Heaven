@@ -467,183 +467,218 @@ class _HomeScreenState extends State<HomeScreen> {
                     final banner = banners[index];
                     return Container(
                       margin: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        gradient: banner['gradient'] as LinearGradient,
+                      child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            right: -20,
-                            top: -20,
-                            child: Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: banner['gradient'] as LinearGradient,
                           ),
-                          Positioned(
-                            right: 40,
-                            bottom: -30,
-                            child: Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
+                          child: Stack(
+                            clipBehavior: Clip.hardEdge,
+                            children: [
+                              // Decorative circles
+                              Positioned(
+                                right: -20,
+                                top: -20,
+                                child: Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Row(
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                              Positioned(
+                                right: 40,
+                                bottom: -30,
+                                child: Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+
+                              // Main content
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
                                   children: [
-                                    Icon(
-                                      banner['icon'] as IconData,
-                                      color: Colors.white,
-                                      size: 40,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      banner['title'] as String,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      banner['subtitle'] as String,
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.9,
-                                        ),
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        if (banner['book_id'] == null) return;
-                                        Navigator.pushNamed(
-                                          context,
-                                          '/detail',
-                                          arguments: {
-                                            'bookId': banner['book_id'],
-                                          },
-                                        );
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.white,
-                                        foregroundColor: banner['color'],
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
+                                    // Left content - Text and button
+                                    Expanded(
+                                      flex: 6,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            banner['icon'] as IconData,
+                                            color: Colors.white,
+                                            size: 32,
                                           ),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 20,
-                                          vertical: 10,
-                                        ),
-                                        elevation: 0,
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            banner['title'] as String,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              height: 1.2,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            banner['subtitle'] as String,
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.9,
+                                              ),
+                                              fontSize: 13,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 12),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              if (banner['book_id'] == null) {
+                                                return;
+                                              }
+                                              Navigator.pushNamed(
+                                                context,
+                                                '/detail',
+                                                arguments: {
+                                                  'bookId': banner['book_id'],
+                                                },
+                                              );
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.white,
+                                              foregroundColor: banner['color'],
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 8,
+                                                  ),
+                                              elevation: 0,
+                                            ),
+                                            child: const Text(
+                                              'Khám Phá Ngay',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      child: const Text(
-                                        //'Explore Now',
-                                        'Khám Phá Ngay',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
+                                    ),
+
+                                    const SizedBox(width: 8),
+
+                                    // Right content - Image (can overflow on small screens)
+                                    Expanded(
+                                      flex: 4,
+                                      child: Container(
+                                        height: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.4,
+                                              ),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          child:
+                                              bannerBooks.length > index &&
+                                                      bannerBooks[index]
+                                                          .thumbnail
+                                                          .isNotEmpty
+                                                  ? Image.network(
+                                                    banner['books'] as String,
+                                                    fit: BoxFit.cover,
+                                                    loadingBuilder: (
+                                                      context,
+                                                      child,
+                                                      loadingProgress,
+                                                    ) {
+                                                      if (loadingProgress ==
+                                                          null) {
+                                                        return child;
+                                                      }
+                                                      return Center(
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                              color: Colors
+                                                                  .white
+                                                                  .withValues(
+                                                                    alpha: 0.8,
+                                                                  ),
+                                                            ),
+                                                      );
+                                                    },
+                                                    errorBuilder: (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) {
+                                                      return Center(
+                                                        child: Icon(
+                                                          banner['icon']
+                                                              as IconData,
+                                                          size: 60,
+                                                          color: Colors.white
+                                                              .withValues(
+                                                                alpha: 0.8,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  )
+                                                  : Center(
+                                                    child: Icon(
+                                                      banner['icon']
+                                                          as IconData,
+                                                      size: 60,
+                                                      color: Colors.white
+                                                          .withValues(
+                                                            alpha: 0.8,
+                                                          ),
+                                                    ),
+                                                  ),
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
-                                const Spacer(),
-                                // Hình ảnh
-                                Container(
-                                  width: 112,
-                                  height: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.4,
-                                        ),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child:
-                                        bannerBooks.length > index &&
-                                                bannerBooks[index]
-                                                    .thumbnail
-                                                    .isNotEmpty
-                                            ? Image.network(
-                                              banner['books']
-                                                  as String, // URL đã được tạo sẵn
-                                              width: 112,
-                                              height: double.infinity,
-                                              fit: BoxFit.cover,
-                                              loadingBuilder: (
-                                                context,
-                                                child,
-                                                loadingProgress,
-                                              ) {
-                                                if (loadingProgress == null) {
-                                                  return child;
-                                                }
-                                                return Center(
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                        color: Colors.white
-                                                            .withValues(
-                                                              alpha: 0.8,
-                                                            ),
-                                                      ),
-                                                );
-                                              },
-                                              errorBuilder: (
-                                                context,
-                                                error,
-                                                stackTrace,
-                                              ) {
-                                                return Center(
-                                                  child: Icon(
-                                                    banner['icon'] as IconData,
-                                                    size: 80,
-                                                    color: Colors.white
-                                                        .withValues(alpha: 0.8),
-                                                  ),
-                                                );
-                                              },
-                                            )
-                                            : Center(
-                                              child: Icon(
-                                                banner['icon'] as IconData,
-                                                size: 80,
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.8,
-                                                ),
-                                              ),
-                                            ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     );
                   },
@@ -1177,7 +1212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(width: 12),
                   Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         'Bestsellers của năm',
@@ -1196,7 +1231,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       Text(
                         //'Top selling books in 2025',
-                        'Những cuốn sách bán chạy nhất năm 2025',
+                        'Sách bán chạy nhất năm 2025',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.white.withValues(alpha: 0.9),
@@ -1300,6 +1335,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     height: 120,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
@@ -1823,9 +1865,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: AppColors.text,
+                height: 1.2,
               ),
               textAlign: TextAlign.center,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],

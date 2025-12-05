@@ -178,10 +178,11 @@ class _DetailVoucherScreenState extends State<DetailVoucherScreen> {
                     child: _buildDetailsSection(),
                   ),
                   SizedBox(height: 32),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-                    child: _buildUseNowButton(),
-                  ),
+                  if (daysLeft > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+                      child: _buildUseNowButton(),
+                    ),
                   SizedBox(height: 62),
                 ],
               ),
@@ -395,7 +396,12 @@ class _DetailVoucherScreenState extends State<DetailVoucherScreen> {
         child: ElevatedButton(
           onPressed: () {
             // Quay về màn checkout với voucher đã chọn
-            Navigator.pop(context, promotion);
+            //Navigator.pop(context, promotion);
+            Navigator.pushNamed(
+              context,
+              '/main',
+              arguments: {'promotion': promotion},
+            );
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryDark,

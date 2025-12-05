@@ -805,7 +805,7 @@ class _CartScreenState extends State<CartScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 0.55,
+                childAspectRatio: 0.5,
               ),
               itemCount: state.suggestions.length,
               itemBuilder:
@@ -853,7 +853,7 @@ class _CartScreenState extends State<CartScreen> {
             Stack(
               children: [
                 Container(
-                  height: 180,
+                  height: 174,
                   decoration: BoxDecoration(
                     color: AppColors.card,
                     borderRadius: const BorderRadius.vertical(
@@ -939,16 +939,18 @@ class _CartScreenState extends State<CartScreen> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.text,
+                        height: 1.2,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'by ${book.author}',
-                      style: TextStyle(fontSize: 14, color: Colors.black54),
-                      maxLines: 1,
-                    ),
+                    if (book.author.isNotEmpty)
+                      Text(
+                        'by ${book.author}',
+                        style: TextStyle(fontSize: 14, color: Colors.black54),
+                        maxLines: 1,
+                      ),
                     const Spacer(),
                     Row(
                       children: [
@@ -980,7 +982,7 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 4),
+                    SizedBox(height: 2),
                     Text(
                       FormatPrice.formatPrice(book.price),
                       style: TextStyle(
