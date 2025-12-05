@@ -6,6 +6,7 @@ import 'package:heaven_book_app/bloc/product_type/product_type_bloc.dart';
 import 'package:heaven_book_app/bloc/product_type/product_type_event.dart';
 import 'package:heaven_book_app/bloc/promotion/promotion_event.dart';
 import 'package:heaven_book_app/bloc/suggest/suggest_bloc.dart';
+import 'package:heaven_book_app/bloc/suggest/suggest_event.dart';
 import 'package:heaven_book_app/bloc/user/user_event.dart';
 import 'package:heaven_book_app/services/product_type_service.dart';
 import 'package:heaven_book_app/services/suggest_service.dart';
@@ -83,7 +84,12 @@ Future<void> main() async {
         BlocProvider<PromotionBloc>(
           create: (_) => PromotionBloc(promotionService)..add(LoadPromotions()),
         ),
-        BlocProvider<SuggestBloc>(create: (_) => SuggestBloc(suggestService)),
+        BlocProvider<SuggestBloc>(
+          create:
+              (_) =>
+                  SuggestBloc(suggestService, bookRepository)
+                    ..add(LoadSuggests('home')),
+        ),
         BlocProvider<ProductTypeBloc>(
           create:
               (_) =>

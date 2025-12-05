@@ -146,7 +146,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final message = result['message'] as String;
         emit(ForgotPasswordSuccess(message: message));
       } catch (e) {
-        //emit(AuthFailure('Không thể gửi mã đặt lại mật khẩu: ${e.toString()}'));
         emit(
           AuthFailure(
             'Không thể gửi mã đặt lại mật khẩu: Có thể bạn đã nhập sai email hoặc tài khoản chưa được đăng ký.',

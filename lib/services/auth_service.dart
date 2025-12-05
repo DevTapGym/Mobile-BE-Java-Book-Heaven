@@ -564,8 +564,8 @@ class AuthService {
   Future<Map<String, dynamic>> forgotPassword(String email) async {
     try {
       final response = await apiClient.publicDio.post(
-        '/auth/forgot-password',
-        data: {"email": email},
+        '/auth/resend-code',
+        queryParameters: {"email": email},
       );
 
       if (response.statusCode == 200) {
@@ -577,16 +577,12 @@ class AuthService {
         };
       } else {
         throw Exception(
-          response.data['message'] ?? 'Không thể gửi mã xác thực',
+          'Failed to load promotions (status: ${response.statusCode})',
         );
       }
-    } on DioException catch (e) {
-      if (e.response != null && e.response?.data != null) {
-        throw Exception(
-          e.response?.data['message'] ?? 'Không thể gửi mã xác thực',
-        );
-      }
-      throw Exception('Không thể kết nối đến server. Vui lòng thử lại.');
+    } catch (e) {
+      debugPrint('💥 Error in forgotPassword: $e');
+      throw Exception('Error loading forgotPassword: $e');
     }
   }
 
@@ -597,8 +593,8 @@ class AuthService {
   }) async {
     try {
       final response = await apiClient.publicDio.post(
-        '/auth/reset-password',
-        data: {"email": email, "code": code, "new_password": newPassword},
+        '/auth/change-password-retry',
+        data: {"email": email, "code": code, "password": newPassword},
       );
 
       if (response.statusCode == 200) {

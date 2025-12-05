@@ -328,10 +328,6 @@ class _ResetScreenState extends State<ResetScreen> {
                                     //return 'Please enter new password';
                                     return 'Vui lòng nhập mật khẩu mới';
                                   }
-                                  if (value.length < 8) {
-                                    //return 'Password must be at least 8 characters';
-                                    return 'Mật khẩu phải có ít nhất 8 ký tự';
-                                  }
                                   return null;
                                 },
                               ),
@@ -425,6 +421,27 @@ class _ResetScreenState extends State<ResetScreen> {
                                         content: const Text(
                                           //'Please enter a complete 6-digit OTP',
                                           'Vui lòng nhập mã OTP đầy đủ 6 chữ số',
+                                          style: TextStyle(fontSize: 16),
+                                        ),
+                                        backgroundColor: Colors.red,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  // Kiểm tra lại mật khẩu trùng khớp
+                                  if (_passwordController.text !=
+                                      _confirmPasswordController.text) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text(
+                                          'Mật khẩu và xác nhận mật khẩu không khớp',
                                           style: TextStyle(fontSize: 16),
                                         ),
                                         backgroundColor: Colors.red,

@@ -29,10 +29,12 @@ class _ForgotScreenState extends State<ForgotScreen> {
             ),
           );
 
-          Navigator.pop(context);
-
           if (mounted) {
-            Navigator.pushNamed(context, '/register');
+            Navigator.pushNamed(
+              context,
+              '/reset',
+              arguments: {'email': _emailController.text.trim()},
+            );
           }
         }
       },

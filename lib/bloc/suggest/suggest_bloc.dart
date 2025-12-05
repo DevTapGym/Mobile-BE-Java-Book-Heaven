@@ -2,12 +2,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heaven_book_app/bloc/suggest/suggest_event.dart';
 import 'package:heaven_book_app/bloc/suggest/suggest_state.dart';
 import 'package:heaven_book_app/interceptors/app_session.dart';
+import 'package:heaven_book_app/services/book_service.dart';
 import 'package:heaven_book_app/services/suggest_service.dart';
 
 class SuggestBloc extends Bloc<SuggestEvent, SuggestState> {
   final SuggestService _service;
+  final BookService bookService;
 
-  SuggestBloc(this._service) : super(SuggestInitial()) {
+  SuggestBloc(this._service, this.bookService) : super(SuggestInitial()) {
     on<LoadSuggests>(_onLoadSuggestions);
     on<FeedbackSuggest>(_onFeedbackSuggest);
   }
@@ -25,6 +27,8 @@ class SuggestBloc extends Bloc<SuggestEvent, SuggestState> {
       emit(SuggestLoaded(suggestions: suggestions));
     } catch (e) {
       emit(SuggestError(e.toString()));
+      final allBooks = await bookService.getAllBooks();
+      emit(SuggestLoaded(suggestions: allBooks));
     }
   }
 
@@ -41,6 +45,8 @@ class SuggestBloc extends Bloc<SuggestEvent, SuggestState> {
       );
     } catch (e) {
       emit(SuggestError(e.toString()));
+      final allBooks = await bookService.getAllBooks();
+      emit(SuggestLoaded(suggestions: allBooks));
     }
   }
 }
