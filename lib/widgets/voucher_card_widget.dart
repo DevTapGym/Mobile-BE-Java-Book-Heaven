@@ -134,7 +134,10 @@ class VoucherCardWidget extends StatelessWidget {
                       ],
                     ],
                   ),
-                  Text('Có hiệu lực đến: $validUntil'),
+                  Text(
+                    'Thời hạn kết thúc: $validUntil',
+                    style: TextStyle(fontSize: 12.0, color: Colors.grey[600]),
+                  ),
                   if (showRedeemButton) ...[
                     TextButton(
                       onPressed: () {

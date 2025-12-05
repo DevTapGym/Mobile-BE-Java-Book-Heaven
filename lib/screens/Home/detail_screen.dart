@@ -1030,7 +1030,7 @@ class _DetailScreenState extends State<DetailScreen>
                         ),
                         label: Text(
                           //'Add to Cart',
-                          'Thêm vào giỏ hàng',
+                          'Thêm giỏ hàng',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

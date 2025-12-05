@@ -322,6 +322,7 @@ class _ResultScreenState extends State<ResultScreen> {
             children: [
               // Product Type Filter
               Expanded(
+                flex: 5,
                 child: BlocBuilder<ProductTypeBloc, ProductTypeState>(
                   builder: (context, state) {
                     List<String> productTypeNames = ['All'];
@@ -370,7 +371,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     }
 
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.05),
                         border: Border.all(
@@ -381,9 +382,11 @@ class _ResultScreenState extends State<ResultScreen> {
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _selectedProductType,
+                          isExpanded: true,
                           icon: const Icon(
                             Icons.keyboard_arrow_down,
                             color: AppColors.primaryDark,
+                            size: 20,
                           ),
                           items:
                               productTypeNames.map((productType) {
@@ -392,6 +395,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                   child: Text(
                                     productType,
                                     style: const TextStyle(fontSize: 13),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 );
                               }).toList(),
@@ -421,12 +425,13 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
               ),
 
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
 
               // Sort Filter
               Expanded(
+                flex: 6,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.05),
                     border: Border.all(
@@ -437,9 +442,11 @@ class _ResultScreenState extends State<ResultScreen> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedSortOption,
+                      isExpanded: true,
                       icon: const Icon(
                         Icons.sort,
                         color: AppColors.primaryDark,
+                        size: 20,
                       ),
                       items:
                           _sortOptions.map((option) {
@@ -448,6 +455,7 @@ class _ResultScreenState extends State<ResultScreen> {
                               child: Text(
                                 option,
                                 style: const TextStyle(fontSize: 13),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             );
                           }).toList(),
@@ -482,7 +490,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 }
 
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.05),
                     border: Border.all(
@@ -505,9 +513,11 @@ class _ResultScreenState extends State<ResultScreen> {
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: _selectedCategory,
+                            isExpanded: true,
                             icon: const Icon(
                               Icons.keyboard_arrow_down,
                               color: AppColors.primaryDark,
+                              size: 20,
                             ),
                             items:
                                 categoryNames.map((category) {
@@ -516,6 +526,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                     child: Text(
                                       category,
                                       style: const TextStyle(fontSize: 13),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   );
                                 }).toList(),
@@ -568,44 +579,51 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   Widget _buildEmptyWidget() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.search_off, size: 80, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          const Text(
-            'No books found',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppColors.text,
+    return SingleChildScrollView(
+      child: Container(
+        height: MediaQuery.of(context).size.height - 300,
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            const Text(
+              'No books found',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.text,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Try adjusting your search or filters',
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _searchController.clear();
-                _selectedProductType = 'All';
-                _selectedCategory = 'All';
-                // Load lại tất cả sách khi clear filters
-                context.read<BookBloc>().add(LoadAllBooks());
-              });
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            const SizedBox(height: 8),
+            Text(
+              'Try adjusting your search or filters',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
-            child: const Text('Clear Filters'),
-          ),
-        ],
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _searchController.clear();
+                  _selectedProductType = 'All';
+                  _selectedCategory = 'All';
+                  // Load lại tất cả sách khi clear filters
+                  context.read<BookBloc>().add(LoadAllBooks());
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
+              child: const Text('Clear Filters'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -618,7 +636,7 @@ class _ResultScreenState extends State<ResultScreen> {
           crossAxisCount: 2,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio: 0.55,
+          childAspectRatio: 0.52,
         ),
         itemCount: books.length,
         itemBuilder: (context, index) {
@@ -773,6 +791,7 @@ class _ResultScreenState extends State<ResultScreen> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.text,
+                        height: 1.2,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
