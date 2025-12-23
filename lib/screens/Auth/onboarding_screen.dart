@@ -41,8 +41,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
-                height: 360,
-                width: 360,
+                height: MediaQuery.of(context).size.width - 60,
+                width: MediaQuery.of(context).size.width - 60,
                 child:
                     _controller.value.isInitialized
                         ? ClipRRect(
@@ -107,8 +107,8 @@ class OnboardingScreen1 extends StatelessWidget {
               const Spacer(flex: 2),
               // Placeholder cho hình ảnh
               Container(
-                height: 340,
-                width: 340,
+                height: MediaQuery.of(context).size.width - 60,
+                width: MediaQuery.of(context).size.width - 60,
                 padding: EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.5),
@@ -181,16 +181,16 @@ class OnboardingScreen2 extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Spacer(flex: 2),
+                  const Spacer(flex: 4),
                   SizedBox(
-                    height: 360,
-                    width: 360,
+                    height: MediaQuery.of(context).size.width - 60,
+                    width: MediaQuery.of(context).size.width - 60,
                     child: Image.asset(
                       'assets/images/Onboarding_2.png',
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 160),
+                  const SizedBox(height: 120),
                   const Text(
                     //'Endless Book Choices',
                     'Vô vàn lựa chọn sách',
@@ -221,7 +221,7 @@ class OnboardingScreen2 extends StatelessWidget {
                       height: 1.5,
                     ),
                   ),
-                  const Spacer(flex: 2),
+                  const Spacer(flex: 4),
                 ],
               ),
             ),
@@ -248,8 +248,8 @@ class OnboardingScreen3 extends StatelessWidget {
               const Spacer(flex: 2),
               // Placeholder cho hình ảnh
               Container(
-                height: 340,
-                width: 340,
+                height: MediaQuery.of(context).size.width - 60,
+                width: MediaQuery.of(context).size.width - 60,
                 padding: EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.5),

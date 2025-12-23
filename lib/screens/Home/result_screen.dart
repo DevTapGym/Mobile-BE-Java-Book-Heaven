@@ -73,10 +73,10 @@ class _ResultScreenState extends State<ResultScreen> {
         } else if (type == 'filter' && query != null) {
           context.read<BookBloc>().add(LoadProductTypeBooks(query));
         } else {
-          context.read<BookBloc>().add(LoadBooks());
+          context.read<BookBloc>().add(LoadAllBooks());
         }
       } else {
-        context.read<BookBloc>().add(LoadBooks());
+        context.read<BookBloc>().add(LoadAllBooks());
       }
     }
   }
@@ -119,109 +119,118 @@ class _ResultScreenState extends State<ResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            context.read<BookBloc>().add(LoadBooks());
-            Navigator.pop(context);
-          },
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _getPageTitle(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          context.read<BookBloc>().add(LoadBooks());
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.primary,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              context.read<BookBloc>().add(LoadBooks());
+              Navigator.pop(context);
+            },
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _getPageTitle(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            Text(
-              _getPageSubtitle(),
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              Text(
+                _getPageSubtitle(),
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                _selectedViewType == 'grid' ? Icons.view_list : Icons.grid_view,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                setState(() {
+                  _selectedViewType =
+                      _selectedViewType == 'grid' ? 'list' : 'grid';
+                });
+              },
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _selectedViewType == 'grid' ? Icons.view_list : Icons.grid_view,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              setState(() {
-                _selectedViewType =
-                    _selectedViewType == 'grid' ? 'list' : 'grid';
-              });
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          _buildSearchAndFilterBar(),
+        body: Column(
+          children: [
+            _buildSearchAndFilterBar(),
 
-          // Results
-          Expanded(
-            child: BlocBuilder<BookBloc, BookState>(
-              builder: (context, state) {
-                if (state is BookLoading) {
-                  return _buildLoadingWidget();
-                } else if (state is BookSearchLoaded) {
-                  final books = state.searchResults;
-                  return _buildBooksResult(books);
-                } else if (state is BookLoadAll) {
-                  final books = state.allBooks;
-                  return _buildBooksResult(books);
-                } else if (state is BookCategoryLoaded) {
-                  final books = state.categoryBooks;
-                  return _buildBooksResult(books);
-                } else if (state is BookError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 80,
-                            color: Colors.red[300],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Error loading books',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red,
+            // Results
+            Expanded(
+              child: BlocBuilder<BookBloc, BookState>(
+                builder: (context, state) {
+                  if (state is BookLoading) {
+                    return _buildLoadingWidget();
+                  } else if (state is BookSearchLoaded) {
+                    final books = state.searchResults;
+                    return _buildBooksResult(books);
+                  } else if (state is BookLoadAll) {
+                    final books = state.allBooks;
+                    return _buildBooksResult(books);
+                  } else if (state is BookCategoryLoaded) {
+                    final books = state.categoryBooks;
+                    return _buildBooksResult(books);
+                  } else if (state is BookError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 80,
+                              color: Colors.red[300],
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            state.message,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.red,
+                            const SizedBox(height: 16),
+                            Text(
+                              'Error loading books',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red,
+                              ),
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+                            Text(
+                              state.message,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.red,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                }
-                return _buildLoadingWidget();
-              },
+                    );
+                  }
+                  return _buildLoadingWidget();
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

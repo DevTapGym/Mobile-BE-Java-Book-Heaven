@@ -148,9 +148,8 @@ class AuthService {
         );
       }
       throw Exception('Không thể kết nối đến server. Vui lòng thử lại.');
-    } catch (e, stack) {
+    } catch (e) {
       debugPrint('Upload avatar error: $e');
-      debugPrint('Stacktrace: $stack');
       rethrow;
     }
   }

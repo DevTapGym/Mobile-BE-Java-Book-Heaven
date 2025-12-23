@@ -73,16 +73,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         email: event.email,
       );
 
-      final resultUpdateCustomer = await authService.updateCustomer(
-        event.customerId,
-        event.name,
-        event.phone,
-        event.email,
-        event.dateOfBirth,
-        event.gender,
-      );
-
-      if (resultUpdateUser && resultUpdateCustomer) {
+      if (resultUpdateUser) {
         emit(
           UserLoaded(
             userData: await authService.getCurrentUser(),
@@ -122,14 +113,14 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         emit(
           UserLoaded(
             userData: await authService.getCurrentUser(),
-            message: "Avatar updated successfully",
+            message: null,
           ),
         );
       } else {
         emit(UserError("Failed to update user information"));
       }
     } catch (e) {
-      emit(UserError(e.toString()));
+      emit(UserError("Lỗi: $e"));
     }
   }
 }

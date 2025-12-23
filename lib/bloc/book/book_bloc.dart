@@ -31,8 +31,8 @@ class BookBloc extends Bloc<BookEvent, BookState> {
 
       emit(
         BookLoaded(
-          popularBooks: popularBooks,
-          saleOffBooks: saleOffBooks,
+          popularBooks: popularBooks.take(10).toList(),
+          saleOffBooks: saleOffBooks.take(10).toList(),
           bestSellingBooks: bestSellingBooks.take(3).toList(),
           bannerBooks: bannerBooks,
           randomBooks: randomBooks,

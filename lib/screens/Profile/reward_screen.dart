@@ -440,7 +440,8 @@ Widget _buildMemberCard() {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         SizedBox(height: 4.0),
-                        Row(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               '1,200,000 đ',
@@ -450,7 +451,12 @@ Widget _buildMemberCard() {
                                 color: AppColors.primaryDark,
                               ),
                             ),
-                            Text('/2,000,000 đ'),
+                            Row(
+                              children: [
+                                SizedBox(width: 70),
+                                Text('/2,000,000 đ'),
+                              ],
+                            ),
                           ],
                         ),
                         SizedBox(height: 8.0),

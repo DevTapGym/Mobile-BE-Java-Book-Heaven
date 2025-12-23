@@ -1832,14 +1832,6 @@ class _OrdersScreenState extends State<OrdersScreen>
               ),
             );
           } else if (state is OrderLoaded && state.message != null) {
-            // Hiển thị thông báo thành công khi có message
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message!),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 2),
-              ),
-            );
             // Reload lại danh sách đơn hàng
             Future.delayed(Duration(milliseconds: 500), () {
               // ignore: use_build_context_synchronously
@@ -2220,26 +2212,23 @@ class _OrdersScreenState extends State<OrdersScreen>
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        final state = context.read<OrderBloc>().state;
-                        if (state is OrderLoaded) {
-                          Navigator.pushNamed(
-                            context,
-                            '/buy-now',
-                            arguments: {
-                              'items': [
-                                for (var item in order.items)
-                                  Checkout(
-                                    bookId: item.bookId,
-                                    quantity: item.quantity,
-                                    bookTitle: item.bookTitle,
-                                    unitPrice: item.unitPrice,
-                                    saleOff: item.bookSaleOff,
-                                    bookThumbnail: item.bookThumbnail,
-                                  ),
-                              ],
-                            },
-                          );
-                        }
+                        Navigator.pushNamed(
+                          context,
+                          '/buy-now',
+                          arguments: {
+                            'items': [
+                              for (var item in order.items)
+                                Checkout(
+                                  bookId: item.bookId,
+                                  quantity: item.quantity,
+                                  bookTitle: item.bookTitle,
+                                  unitPrice: item.unitPrice,
+                                  saleOff: item.bookSaleOff,
+                                  bookThumbnail: item.bookThumbnail,
+                                ),
+                            ],
+                          },
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
