@@ -247,7 +247,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             vertical: 4.0,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Colors.green,
+                                            color: AppColors.primaryDark,
                                             borderRadius: BorderRadius.circular(
                                               12.0,
                                             ),
@@ -382,7 +382,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 backgroundImage:
                                     user.avatarUrl != null
                                         ? Image.network(
-                                          'http://10.0.2.2:8080/storage/Avatar/${user.avatarUrl}',
+                                          //'http://10.0.2.2:8080/storage/Avatar/${user.avatarUrl}'
+                                          'https://api.thebookheaven.io.vn/storage/avatar/${user.avatarUrl}',
                                           errorBuilder: (
                                             context,
                                             error,

@@ -227,77 +227,92 @@ class _DetailScreenState extends State<DetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: CustomScrollView(
-        slivers: [
-          // Custom App Bar
-          _buildSliverAppBar(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          if (from == 'result') {
+            context.read<BookBloc>().add(LoadAllBooks());
+          } else {
+            context.read<BookBloc>().add(LoadBooks());
+          }
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: CustomScrollView(
+          slivers: [
+            // Custom App Bar
+            _buildSliverAppBar(),
 
-          // Book content
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Book info section
-                _buildBookInfoSection(),
+            // Book content
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Book info section
+                  _buildBookInfoSection(),
 
-                // Action buttons
-                _buildActionButtons(),
+                  // Action buttons
+                  _buildActionButtons(),
 
-                // Tab section
-                _buildTabSection(),
+                  // Tab section
+                  _buildTabSection(),
 
-                // Divider 1
-                Container(height: 12, color: Colors.grey[100]),
+                  // Divider 1
+                  Container(height: 12, color: Colors.grey[100]),
 
-                // Reviews section
-                // ReviewSectionWidget(
-                //   reviews: reviews,
-                //   bookData: bookData,
-                //   formatReviewCount: formatReviewCount,
-                // ),
+                  // Reviews section
+                  // ReviewSectionWidget(
+                  //   reviews: reviews,
+                  //   bookData: bookData,
+                  //   formatReviewCount: formatReviewCount,
+                  // ),
 
-                // // Divider 1
-                // Container(height: 12, color: Colors.grey[100]),
+                  // // Divider 1
+                  // Container(height: 12, color: Colors.grey[100]),
 
-                // Related books
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: BlocBuilder<BookBloc, BookState>(
-                    builder: (context, state) {
-                      if (state is BookLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (state is BookDetailLoaded) {
-                        return BookSectionWidget(
-                          //title: 'Popular Books',
-                          title: 'Có thể bạn cũng thích',
-                          books: state.relatedBooks,
-                          onViewAll: () {},
-                          onBookTap: (book) {
-                            Navigator.pushNamed(
-                              context,
-                              '/detail',
-                              arguments: {'bookId': book.id},
-                            );
-                          },
-                        );
-                      } else if (state is BookError) {
-                        return Text('Lỗi: ${state.message}');
-                      }
-                      return const SizedBox.shrink();
-                    },
+                  // Related books
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: BlocBuilder<BookBloc, BookState>(
+                      builder: (context, state) {
+                        if (state is BookLoading) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        } else if (state is BookDetailLoaded) {
+                          return BookSectionWidget(
+                            //title: 'Popular Books',
+                            title: 'Có thể bạn cũng thích',
+                            books: state.relatedBooks,
+                            onViewAll: () {},
+                            onBookTap: (book) {
+                              Navigator.pushNamed(
+                                context,
+                                '/detail',
+                                arguments: {'bookId': book.id},
+                              );
+                            },
+                          );
+                        } else if (state is BookError) {
+                          return Text('Lỗi: ${state.message}');
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
                   ),
-                ),
 
-                // Bottom spacing
-                const SizedBox(height: 24), // Space for bottom buttons
-              ],
+                  // Bottom spacing
+                  const SizedBox(height: 24), // Space for bottom buttons
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+        bottomNavigationBar: _buildBottomBar(),
       ),
-      bottomNavigationBar: _buildBottomBar(),
     );
   }
 
@@ -1016,7 +1031,9 @@ class _DetailScreenState extends State<DetailScreen>
                             );
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('${book.title} added to cart!'),
+                                content: Text(
+                                  '${book.title} đã thêm vào giỏ hàng!',
+                                ),
                                 duration: const Duration(seconds: 2),
                                 backgroundColor: AppColors.primaryDark,
                               ),

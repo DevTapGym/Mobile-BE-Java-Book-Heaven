@@ -245,7 +245,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          width: 100,
+                          width: (MediaQuery.of(context).size.width / 3) - 30,
                           height: 4,
                           decoration: BoxDecoration(
                             color: _progressBarColor,
@@ -253,7 +253,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           ),
                         ),
                         Container(
-                          width: 100,
+                          width: (MediaQuery.of(context).size.width / 3) - 30,
                           height: 4,
                           decoration: BoxDecoration(
                             color:
@@ -264,7 +264,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           ),
                         ),
                         Container(
-                          width: 100,
+                          width: (MediaQuery.of(context).size.width / 3) - 30,
                           height: 4,
                           decoration: BoxDecoration(
                             color:

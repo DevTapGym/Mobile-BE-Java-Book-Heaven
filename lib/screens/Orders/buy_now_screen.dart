@@ -28,12 +28,14 @@ class PaymentMethod {
   final String name;
   final IconData icon;
   final bool isActive;
+  String? imageUrl;
 
   PaymentMethod({
     required this.id,
     required this.name,
     required this.icon,
     this.isActive = true,
+    this.imageUrl,
   });
 }
 
@@ -83,8 +85,10 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
     ),
     PaymentMethod(
       id: 2,
-      name: 'Chuyển khoản ngân hàng',
+      name: 'VNpay',
       icon: Icons.account_balance,
+      imageUrl:
+          'https://upload.wikimedia.org/wikipedia/commons/6/6a/Logo_VNPAY.png',
       isActive: false,
     ),
     PaymentMethod(
@@ -1317,6 +1321,7 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
                         payment.icon,
                         payment.id,
                         payment.isActive,
+                        payment.imageUrl,
                       ),
                     )
                     .toList(),
@@ -1331,6 +1336,7 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
     IconData icon,
     int paymentId,
     bool isActive,
+    String? imageUrl,
   ) {
     final isSelected = selectedPaymentId == paymentId;
 
@@ -1362,11 +1368,24 @@ class _BuyNowScreenState extends State<BuyNowScreen> {
                   ),
                 ],
               ),
-              child: Icon(
-                icon,
-                size: 24,
-                color: isActive ? AppColors.primaryDark : Colors.grey[400],
-              ),
+              child:
+                  imageUrl != null
+                      ? Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6.0),
+                          image: DecorationImage(
+                            image: AssetImage('assets/images/VNPay_logos.png'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      )
+                      : Icon(
+                        icon,
+                        size: 24,
+                        color: isActive ? AppColors.primary : Colors.grey[400],
+                      ),
             ),
             SizedBox(width: 12.0),
             Expanded(

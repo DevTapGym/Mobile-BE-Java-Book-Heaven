@@ -27,16 +27,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   File? selectedImageFile;
   final ImagePicker _imagePicker = ImagePicker();
 
+  // Lưu thông tin ban đầu để so sánh
+  String _initialName = '';
+  String _initialPhone = '';
+  String _initialGender = '';
+  String _initialDateOfBirth = '';
+
   @override
   void initState() {
     super.initState();
-    debugPrint('🚀 EditProfileScreen initState called');
 
     // Trigger load user data từ API
     context.read<UserBloc>().add(LoadUserInfo());
 
     // Load data từ AuthBloc state hiện tại
     _loadUserData();
+
+    // Lắng nghe thay đổi trong các TextField để cập nhật UI
+    nameController.addListener(() => setState(() {}));
+    phoneController.addListener(() => setState(() {}));
   }
 
   @override
@@ -57,6 +66,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       phoneController.text = user.phone ?? '';
       imageUrl = user.avatarUrl;
 
+      // Lưu thông tin ban đầu
+      _initialName = user.name;
+      _initialPhone = user.phone ?? '';
+      _initialGender = user.customer?.gender ?? '';
+
       if (user.customer?.birthday != null) {
         dateOfBirthController.text = DateFormat(
           'dd-MM-yyyy',
@@ -64,10 +78,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         dateOfBirthForServer = DateFormat(
           'yyyy-MM-dd',
         ).format(user.customer!.birthday!);
+        _initialDateOfBirth = dateOfBirthForServer;
       }
     } else {
       context.read<UserBloc>().add(LoadUserInfo());
     }
+  }
+
+  // Kiểm tra xem có thay đổi thông tin không
+  bool _hasChanges() {
+    return nameController.text != _initialName ||
+        phoneController.text != _initialPhone ||
+        (selectedGender ?? '') != _initialGender ||
+        dateOfBirthForServer != _initialDateOfBirth ||
+        selectedImageFile != null;
+  }
+
+  // Kiểm tra tính hợp lệ của form
+  bool _isValidForm() {
+    return nameController.text.trim().isNotEmpty;
+  }
+
+  // Kiểm tra xem button có được enable không
+  bool _canUpdate() {
+    return _hasChanges() && _isValidForm();
   }
 
   Widget _buildGenderSelector() {
@@ -130,7 +164,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     // Sau đó hiển thị ảnh từ server
     if (imageUrl != null && imageUrl!.isNotEmpty) {
-      return NetworkImage('http://10.0.2.2:8080/storage/Avatar/$imageUrl');
+      //return NetworkImage('http://10.0.2.2:8080/storage/Avatar/$imageUrl');
+      return NetworkImage(
+        'https://api.thebookheaven.io.vn/storage/avatar/$imageUrl',
+      );
     }
 
     // Default avatar nếu không có ảnh
@@ -246,7 +283,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 children: [
                   Icon(Icons.check_circle, color: Colors.white),
                   SizedBox(width: 12),
-                  Text('Ảnh đã được chọn. Nhấn "Cập nhật" để lưu.'),
+                  Text(
+                    'Ấn cập nhật để thay đổi',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    softWrap: true,
+                  ),
                 ],
               ),
               backgroundColor: Colors.green,
@@ -283,7 +324,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           );
         } else {
           if (Navigator.canPop(context)) {
-            Navigator.of(context, rootNavigator: true).pop();
+            Navigator.of(context).pop();
           }
         }
 
@@ -404,6 +445,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   label: 'Tên',
                                   controller: nameController,
                                 ),
+                                if (nameController.text.trim().isEmpty &&
+                                    _hasChanges())
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Text(
+                                      'Tên không được để trống',
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
                                 SizedBox(height: 8.0),
                                 TextfieldCustomWidget(
                                   //label: 'Phone',
@@ -416,7 +469,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   label: 'Ngày sinh',
                                   controller: dateOfBirthController,
                                   onDateChanged: (serverFormat) {
-                                    dateOfBirthForServer = serverFormat;
+                                    setState(() {
+                                      dateOfBirthForServer = serverFormat;
+                                    });
                                   },
                                 ),
                                 SizedBox(height: 8.0),
@@ -504,50 +559,67 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 16.0, bottom: 16.0),
                     child: ElevatedButton(
-                      onPressed: () {
-                        final authState = context.read<UserBloc>().state;
-                        if (authState is UserLoaded) {
-                          final user = authState.userData;
-                          debugPrint('Data User: ${user.id}');
-                          // Cập nhật thông tin user
-                          context.read<UserBloc>().add(
-                            UpdateUser(
-                              id: user.id,
-                              customerId: user.customer?.id ?? 0,
-                              name: nameController.text,
-                              dateOfBirth: dateOfBirthForServer,
-                              phone: phoneController.text,
-                              gender: selectedGender ?? '',
-                              avatar: imageUrl ?? '',
-                              email: user.email,
-                            ),
-                          );
-                        }
+                      onPressed:
+                          !_canUpdate()
+                              ? null
+                              : () {
+                                // Kiểm tra validation trước khi cập nhật
+                                if (nameController.text.trim().isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Tên không được để trống'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
 
-                        // Nếu có ảnh mới được chọn, cập nhật avatar
-                        if (selectedImageFile != null) {
-                          final authState = context.read<UserBloc>().state;
+                                final authState =
+                                    context.read<UserBloc>().state;
+                                if (authState is UserLoaded) {
+                                  final user = authState.userData;
+                                  // Cập nhật thông tin user
+                                  context.read<UserBloc>().add(
+                                    UpdateUser(
+                                      id: user.id,
+                                      customerId: user.customer?.id ?? 0,
+                                      name: nameController.text,
+                                      dateOfBirth: dateOfBirthForServer,
+                                      phone: phoneController.text,
+                                      gender: selectedGender ?? '',
+                                      avatar: imageUrl ?? '',
+                                      email: user.email,
+                                    ),
+                                  );
+                                }
 
-                          if (authState is UserLoaded) {
-                            final user = authState.userData;
+                                // Nếu có ảnh mới được chọn, cập nhật avatar
+                                if (selectedImageFile != null) {
+                                  final authState =
+                                      context.read<UserBloc>().state;
 
-                            context.read<UserBloc>().add(
-                              ChangeAvatar(
-                                id: user.id,
-                                name: nameController.text,
-                                phone: phoneController.text,
-                                email: user.email,
-                                avatarPath: selectedImageFile!,
-                              ),
-                            );
-                          }
-                        }
-                      },
+                                  if (authState is UserLoaded) {
+                                    final user = authState.userData;
+
+                                    context.read<UserBloc>().add(
+                                      ChangeAvatar(
+                                        id: user.id,
+                                        name: nameController.text,
+                                        phone: phoneController.text,
+                                        email: user.email,
+                                        avatarPath: selectedImageFile!,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(double.infinity, 50),
-                        backgroundColor: AppColors.primaryDark,
+                        backgroundColor:
+                            _canUpdate() ? AppColors.primaryDark : Colors.grey,
                         shadowColor: Colors.black26,
-                        elevation: 6,
+                        elevation: _canUpdate() ? 6 : 0,
+                        disabledBackgroundColor: Colors.grey.shade400,
                       ),
                       child: Text(
                         //'Update',

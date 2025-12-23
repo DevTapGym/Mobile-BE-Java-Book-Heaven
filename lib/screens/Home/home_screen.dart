@@ -163,12 +163,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               //title: 'Books on Sale',
                               title: 'Đồ văn phòng \nphẩm ở đây, quẹo lựa',
                               books: state.saleOffBooks,
-                              onViewAll: () {},
+                              onViewAll: () {
+                                Navigator.pushNamed(context, '/result');
+                              },
                               onBookTap: (book) {
                                 Navigator.pushNamed(
                                   context,
                                   '/detail',
-                                  arguments: {'bookId': book.id},
+                                  arguments: {'bookId': book.id, 'from': 'home'},
                                 );
                               },
                             );
@@ -194,7 +196,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               //title: 'Popular Books',
                               title: 'Xu Hướng Đọc Hiện Nay',
                               books: state.popularBooks,
-                              onViewAll: () {},
+                              onViewAll: () {
+                                Navigator.pushNamed(context, '/result');
+                              },
                               onBookTap: (book) {
                                 Navigator.pushNamed(
                                   context,

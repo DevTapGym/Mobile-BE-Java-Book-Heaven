@@ -166,7 +166,7 @@ class _ForgotScreenState extends State<ForgotScreen> {
                                   fontSize: 18,
                                 ),
                                 decoration: InputDecoration(
-                                  hintText: 'Enter your email',
+                                  hintText: 'Nhập email của bạn',
                                   hintStyle: const TextStyle(
                                     color: AppColors.text,
                                     fontSize: 16,
@@ -209,12 +209,12 @@ class _ForgotScreenState extends State<ForgotScreen> {
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter your email';
+                                    return 'Hãy nhập email của bạn';
                                   }
                                   if (!RegExp(
                                     r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                                   ).hasMatch(value)) {
-                                    return 'Please enter a valid email';
+                                    return 'Hãy nhập một email hợp lệ';
                                   }
                                   return null;
                                 },
