@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/auth_service.dart';
@@ -14,12 +15,35 @@ class AuthInterceptor extends Interceptor {
 
   AuthInterceptor(this._storage, this._dio, this._authService);
 
+  /// Đọc từ secure storage an toàn, xử lý lỗi giải mã khi đổi thiết bị
+  Future<String?> _safeRead(String key) async {
+    try {
+      return await _storage.read(key: key);
+    } on PlatformException catch (e) {
+      // Lỗi giải mã khi đổi thiết bị hoặc reinstall app
+      if (e.message?.contains('BadPaddingException') == true ||
+          e.message?.contains('BAD_DECRYPT') == true) {
+        debugPrint('🚨 Lỗi giải mã storage (đổi thiết bị): ${e.message}');
+        try {
+          await _storage.deleteAll();
+          debugPrint('🧹 Đã clear storage do lỗi giải mã');
+        } catch (clearError) {
+          debugPrint('🚨 Lỗi clear storage: $clearError');
+        }
+      }
+      return null;
+    } catch (e) {
+      debugPrint('🚨 Lỗi đọc storage: $e');
+      return null;
+    }
+  }
+
   @override
   void onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final token = await _storage.read(key: 'access_token');
+    final token = await _safeRead('access_token');
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }
@@ -48,7 +72,7 @@ class AuthInterceptor extends Interceptor {
           final success = await _refreshCompleter?.future ?? false;
           if (success) {
             // Token mới đã được lưu → retry request
-            final newToken = await _storage.read(key: 'access_token');
+            final newToken = await _safeRead('access_token');
             if (newToken != null) {
               final opts = err.requestOptions;
               opts.headers['Authorization'] = 'Bearer $newToken';
@@ -77,7 +101,7 @@ class AuthInterceptor extends Interceptor {
             debugPrint('✅ Refresh token thành công');
 
             // Retry request với token mới
-            final newToken = await _storage.read(key: 'access_token');
+            final newToken = await _safeRead('access_token');
             if (newToken != null) {
               final opts = err.requestOptions;
               opts.headers['Authorization'] = 'Bearer $newToken';

@@ -22,7 +22,9 @@ class StatusOrder {
       description: json['label'] ?? '', // đổi description -> label
       sequence: 0, // JSON không có thứ tự
       note: json['note'] ?? '',
-      timestamp: DateTime.now(), // JSON không có created_at
+      timestamp: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
     );
   }
 }
