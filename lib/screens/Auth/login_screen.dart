@@ -82,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 content: Text(
                   state.message == 'Exception: Bad credentials'
                       ? 'Đăng nhập thất bại: Sai email hoặc mật khẩu'
-                      : 'Đăng nhập thất bại: ${state.message}',
+                      : state.message,
                 ),
                 backgroundColor: Colors.red,
                 duration: const Duration(seconds: 3),

@@ -162,7 +162,7 @@ class _ResetScreenState extends State<ResetScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: List.generate(6, (index) {
                                 return SizedBox(
-                                  width: 48,
+                                  width: 42,
                                   child: Container(
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(12),

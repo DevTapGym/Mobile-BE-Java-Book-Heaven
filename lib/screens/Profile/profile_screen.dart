@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_event.dart';
 import 'package:heaven_book_app/bloc/user/user_state.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/services/auth_service.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
 import 'package:heaven_book_app/screens/Auth/init_screen.dart';
@@ -383,7 +384,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     user.avatarUrl != null
                                         ? Image.network(
                                           //'http://10.0.2.2:8080/storage/Avatar/${user.avatarUrl}'
-                                          'https://api.thebookheaven.io.vn/storage/avatar/${user.avatarUrl}',
+                                          AppSession.baseUrlImgAvatar +
+                                              user.avatarUrl!,
                                           errorBuilder: (
                                             context,
                                             error,

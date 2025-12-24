@@ -170,7 +170,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Navigator.pushNamed(
                                   context,
                                   '/detail',
-                                  arguments: {'bookId': book.id, 'from': 'home'},
+                                  arguments: {
+                                    'bookId': book.id,
+                                    'from': 'home',
+                                  },
                                 );
                               },
                             );
@@ -1488,16 +1491,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          book.author,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 8),
                         Row(
                           children: [
                             const Icon(
@@ -1510,37 +1503,37 @@ class _HomeScreenState extends State<HomeScreen> {
                               '5.0 (${book.sold} sold)',
                               style: const TextStyle(fontSize: 12),
                             ),
-                            const SizedBox(width: 20),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.local_fire_department,
-                                    color: Colors.red.shade400,
-                                    size: 14,
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    'Best Seller',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.red.shade600,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
                           ],
+                        ),
+                        SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.local_fire_department,
+                                color: Colors.red.shade400,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                'Best Seller',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red.shade600,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Row(
@@ -1588,7 +1581,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      '${book.title} added to cart!',
+                                      '${book.title} đã thêm vào giỏ hàng!',
                                     ),
                                     backgroundColor: AppColors.primaryDark,
                                   ),

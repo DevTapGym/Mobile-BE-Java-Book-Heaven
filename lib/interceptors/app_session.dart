@@ -15,6 +15,8 @@ class AppSession {
   //static const String baseUrlImg = 'http://10.0.2.2:8080/storage/product/';
   static const String baseUrlImg ='https://api.thebookheaven.io.vn/storage/product/';
 
+  static const String baseUrlImgAvatar ='https://api.thebookheaven.io.vn/storage/avatar/';
+
   void clear() {
     currentUser = null;
   }
