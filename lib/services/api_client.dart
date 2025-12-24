@@ -10,15 +10,15 @@ class ApiClient {
   ApiClient(FlutterSecureStorage secureStorage, AuthService authService)
     : publicDio = Dio(
         BaseOptions(
-          //baseUrl: 'http://10.0.2.2:8080/api/v1',
+          //baseUrl: 'http://192.168.1.123:8080/api/v1',
           baseUrl: 'https://api.thebookheaven.io.vn/api/v1',
           headers: {'Content-Type': 'application/json'},
         ),
       ),
-
+      //10.0.2.2
       privateDio = Dio(
         BaseOptions(
-          //baseUrl: 'http://10.0.2.2:8080/api/v1',
+          //baseUrl: 'http://192.168.1.123:8080/api/v1',
           baseUrl: 'https://api.thebookheaven.io.vn/api/v1',
           headers: {'Content-Type': 'application/json'},
         ),
