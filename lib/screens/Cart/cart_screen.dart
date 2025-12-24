@@ -48,7 +48,7 @@ class _CartScreenState extends State<CartScreen> {
     final selectedItems = cartItems.where((item) => item.isSelected).toList();
     final subtotal = _calculateTotalPrice(cartItems);
     final totalSavings = _calculateTotalSavings(cartItems);
-    final shipping = 30000.0; // Fixed shipping cost
+    final shipping = 0.0; // Fixed shipping cost
     final finalAmount = subtotal + shipping - totalSavings;
 
     showModalBottomSheet(

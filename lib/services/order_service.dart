@@ -93,6 +93,7 @@ class OrderService {
         'promotionId': promotionId,
         'orderItems': items,
         'statusShipping': 'wait_confirm',
+        'paymentStatus': 0,
       };
 
       debugPrint('Creating order with body: $body');

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:heaven_book_app/bloc/book/book_bloc.dart';
 import 'package:heaven_book_app/bloc/order/order_bloc.dart';
 import 'package:heaven_book_app/bloc/order/order_event.dart';
 import 'package:heaven_book_app/bloc/order/order_state.dart';
@@ -1744,6 +1745,231 @@ class _OrdersScreenState extends State<OrdersScreen>
     );
   }
 
+  Future<void> _handleBuyAgain(Order order) async {
+    try {
+      // Hiển thị loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+
+      // Lấy BookBloc từ context
+      final bookBloc = context.read<BookBloc>();
+
+      // Kiểm tra số lượng từng sản phẩm
+      List<Checkout> checkoutItems = [];
+      List<String> outOfStockBooks = [];
+      List<String> insufficientStockBooks = [];
+
+      for (var item in order.items) {
+        try {
+          // Gọi API lấy chi tiết sản phẩm thông qua BookService từ BookBloc
+          final book = await bookBloc.bookService.getBookDetail(item.bookId);
+
+          // Kiểm tra số lượng
+          if (book.quantity <= 0) {
+            outOfStockBooks.add(item.bookTitle);
+          } else if (book.quantity < item.quantity) {
+            insufficientStockBooks.add(
+              '${item.bookTitle} (Còn ${book.quantity}, cần ${item.quantity})',
+            );
+          } else {
+            // Số lượng đủ, thêm vào danh sách checkout
+            checkoutItems.add(
+              Checkout(
+                bookId: item.bookId,
+                bookTitle: item.bookTitle,
+                bookThumbnail: item.bookThumbnail,
+                unitPrice: item.unitPrice,
+                quantity: item.quantity,
+                saleOff: book.saleOff,
+              ),
+            );
+          }
+        } catch (e) {
+          // Nếu không lấy được thông tin sản phẩm, xem như hết hàng
+          outOfStockBooks.add(item.bookTitle);
+        }
+      }
+
+      // Kiểm tra mounted trước khi sử dụng context
+      if (!mounted) return;
+
+      // Đóng loading dialog
+      Navigator.pop(context);
+
+      // Kiểm tra kết quả
+      if (outOfStockBooks.isNotEmpty || insufficientStockBooks.isNotEmpty) {
+        // Hiển thị thông báo lỗi
+        String message = '';
+
+        if (outOfStockBooks.isNotEmpty) {
+          message += 'Sản phẩm đã hết hàng:\n';
+          message += outOfStockBooks.map((name) => '• $name').join('\n');
+        }
+
+        if (insufficientStockBooks.isNotEmpty) {
+          if (message.isNotEmpty) message += '\n\n';
+          message += 'Sản phẩm không đủ số lượng:\n';
+          message += insufficientStockBooks.map((name) => '• $name').join('\n');
+        }
+
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.warning_rounded,
+                    color: AppColors.discountRed,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Không thể mua lại',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Text(
+                  message,
+                  style: const TextStyle(fontSize: 15, height: 1.5),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primaryDark,
+                  ),
+                  child: const Text(
+                    'Đóng',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      } else if (checkoutItems.isEmpty) {
+        // Không có sản phẩm nào có thể mua
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Icon(Icons.info_outline, color: AppColors.primary, size: 28),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Thông báo',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: const Text(
+                'Không có sản phẩm nào có thể mua lại.',
+                style: TextStyle(fontSize: 15, height: 1.5),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primaryDark,
+                  ),
+                  child: const Text(
+                    'Đóng',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // Tất cả sản phẩm đều đủ số lượng, chuyển màn hình
+        Navigator.pushNamed(
+          context,
+          '/buy-now',
+          arguments: {'items': checkoutItems},
+        );
+      }
+    } catch (e) {
+      // Kiểm tra mounted trước khi sử dụng context
+      if (!mounted) return;
+
+      // Đóng loading dialog nếu còn
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      // Hiển thị lỗi chung
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: AppColors.discountRed,
+                  size: 28,
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Lỗi',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'Đã xảy ra lỗi: ${e.toString()}',
+              style: const TextStyle(fontSize: 15, height: 1.5),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primaryDark,
+                ),
+                child: const Text(
+                  'Đóng',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
   Widget _buildDateFilterChip() {
     if (_selectedDateRange == null) return const SizedBox.shrink();
 
@@ -1966,104 +2192,123 @@ class _OrdersScreenState extends State<OrdersScreen>
 
   Widget _buildOrderList(List<Order> orders) {
     if (orders.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(60),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+      return RefreshIndicator(
+        onRefresh: () async {
+          context.read<OrderBloc>().add(LoadAllOrders());
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.6,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: BorderRadius.circular(60),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 60,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      //'No Orders Yet',
+                      'Chưa có đơn hàng',
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: Colors.grey[800],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      //'You haven\'t placed any orders yet.\nStart shopping to see your orders here!',
+                      'Bạn chưa đặt đơn hàng nào.\nBắt đầu mua sắm để xem đơn hàng của bạn ở đây!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/main');
+                      },
+                      icon: const Icon(
+                        Icons.shopping_bag,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      label: Text(
+                        //'Shop Now!',
+                        'Mua sắm ngay!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 4,
+                        shadowColor: Colors.black.withValues(alpha: 0.3),
+                      ),
                     ),
                   ],
                 ),
-                child: Icon(
-                  Icons.shopping_bag_outlined,
-                  size: 60,
-                  color: AppColors.primary,
-                ),
               ),
-              const SizedBox(height: 24),
-              Text(
-                //'No Orders Yet',
-                'Chưa có đơn hàng',
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.grey[800],
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                //'You haven\'t placed any orders yet.\nStart shopping to see your orders here!',
-                'Bạn chưa đặt đơn hàng nào.\nBắt đầu mua sắm để xem đơn hàng của bạn ở đây!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/main');
-                },
-                icon: const Icon(
-                  Icons.shopping_bag,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                label: Text(
-                  //'Shop Now!',
-                  'Mua sắm ngay!',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 4,
-                  shadowColor: Colors.black.withValues(alpha: 0.3),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: orders.length,
-      itemBuilder: (context, index) {
-        return _buildOrderCard(orders[index]);
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<OrderBloc>().add(LoadAllOrders());
+        await Future.delayed(const Duration(milliseconds: 500));
       },
+      color: AppColors.primary,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: orders.length,
+        itemBuilder: (context, index) {
+          return _buildOrderCard(orders[index]);
+        },
+      ),
     );
   }
 
@@ -2211,24 +2456,8 @@ class _OrdersScreenState extends State<OrdersScreen>
                     order.statusHistory.last.name == 'returned')
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/buy-now',
-                          arguments: {
-                            'items': [
-                              for (var item in order.items)
-                                Checkout(
-                                  bookId: item.bookId,
-                                  quantity: item.quantity,
-                                  bookTitle: item.bookTitle,
-                                  unitPrice: item.unitPrice,
-                                  saleOff: item.bookSaleOff,
-                                  bookThumbnail: item.bookThumbnail,
-                                ),
-                            ],
-                          },
-                        );
+                      onPressed: () async {
+                        await _handleBuyAgain(order);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,

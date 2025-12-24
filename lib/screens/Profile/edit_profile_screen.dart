@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_bloc.dart';
 import 'package:heaven_book_app/bloc/user/user_event.dart';
 import 'package:heaven_book_app/bloc/user/user_state.dart';
+import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/widgets/appbar_custom_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:heaven_book_app/themes/app_colors.dart';
@@ -166,7 +167,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (imageUrl != null && imageUrl!.isNotEmpty) {
       //return NetworkImage('http://10.0.2.2:8080/storage/Avatar/$imageUrl');
       return NetworkImage(
-        'https://api.thebookheaven.io.vn/storage/avatar/$imageUrl',
+        AppSession.baseUrlImgAvatar + imageUrl!,
       );
     }
 

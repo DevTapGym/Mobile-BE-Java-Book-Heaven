@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:heaven_book_app/bloc/book/book_bloc.dart';
 import 'package:heaven_book_app/interceptors/app_session.dart';
 import 'package:heaven_book_app/model/checkout.dart';
 import 'package:heaven_book_app/model/order.dart';
@@ -777,6 +779,231 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
     );
   }
 
+  Future<void> _handleBuyAgain() async {
+    try {
+      // Hiển thị loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+
+      // Lấy BookBloc từ context
+      final bookBloc = context.read<BookBloc>();
+
+      // Kiểm tra số lượng từng sản phẩm
+      List<Checkout> checkoutItems = [];
+      List<String> outOfStockBooks = [];
+      List<String> insufficientStockBooks = [];
+
+      for (var item in _order!.items) {
+        try {
+          // Gọi API lấy chi tiết sản phẩm thông qua BookService từ BookBloc
+          final book = await bookBloc.bookService.getBookDetail(item.bookId);
+
+          // Kiểm tra số lượng
+          if (book.quantity <= 0) {
+            outOfStockBooks.add(item.bookTitle);
+          } else if (book.quantity < item.quantity) {
+            insufficientStockBooks.add(
+              '${item.bookTitle} (Còn ${book.quantity}, cần ${item.quantity})',
+            );
+          } else {
+            // Số lượng đủ, thêm vào danh sách checkout
+            checkoutItems.add(
+              Checkout(
+                bookId: item.bookId,
+                bookTitle: item.bookTitle,
+                bookThumbnail: item.bookThumbnail,
+                unitPrice: item.unitPrice,
+                quantity: item.quantity,
+                saleOff: book.saleOff,
+              ),
+            );
+          }
+        } catch (e) {
+          // Nếu không lấy được thông tin sản phẩm, xem như hết hàng
+          outOfStockBooks.add(item.bookTitle);
+        }
+      }
+
+      // Kiểm tra mounted trước khi sử dụng context
+      if (!mounted) return;
+
+      // Đóng loading dialog
+      Navigator.pop(context);
+
+      // Kiểm tra kết quả
+      if (outOfStockBooks.isNotEmpty || insufficientStockBooks.isNotEmpty) {
+        // Hiển thị thông báo lỗi
+        String message = '';
+
+        if (outOfStockBooks.isNotEmpty) {
+          message += 'Sản phẩm đã hết hàng:\n';
+          message += outOfStockBooks.map((name) => '• $name').join('\n');
+        }
+
+        if (insufficientStockBooks.isNotEmpty) {
+          if (message.isNotEmpty) message += '\n\n';
+          message += 'Sản phẩm không đủ số lượng:\n';
+          message += insufficientStockBooks.map((name) => '• $name').join('\n');
+        }
+
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.warning_rounded,
+                    color: AppColors.discountRed,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Không thể mua lại',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Text(
+                  message,
+                  style: const TextStyle(fontSize: 15, height: 1.5),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primaryDark,
+                  ),
+                  child: const Text(
+                    'Đóng',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      } else if (checkoutItems.isEmpty) {
+        // Không có sản phẩm nào có thể mua
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Icon(Icons.info_outline, color: AppColors.primary, size: 28),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Thông báo',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: const Text(
+                'Không có sản phẩm nào có thể mua lại.',
+                style: TextStyle(fontSize: 15, height: 1.5),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primaryDark,
+                  ),
+                  child: const Text(
+                    'Đóng',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // Tất cả sản phẩm đều đủ số lượng, chuyển màn hình
+        Navigator.pushNamed(
+          context,
+          '/buy-now',
+          arguments: {'items': checkoutItems},
+        );
+      }
+    } catch (e) {
+      // Kiểm tra mounted trước khi sử dụng context
+      if (!mounted) return;
+
+      // Đóng loading dialog nếu còn
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      // Hiển thị lỗi chung
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: AppColors.discountRed,
+                  size: 28,
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Lỗi',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'Đã xảy ra lỗi: ${e.toString()}',
+              style: const TextStyle(fontSize: 15, height: 1.5),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primaryDark,
+                ),
+                child: const Text(
+                  'Đóng',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
   Widget _buildBottomBar() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -830,28 +1057,9 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
             Expanded(
               flex: 2,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (_order != null) {
-                    // Chuyển đổi OrderItem sang Checkout
-                    List<Checkout> checkoutItems =
-                        _order!.items.map((item) {
-                          return Checkout(
-                            bookId: item.bookId,
-                            bookTitle: item.bookTitle,
-                            bookThumbnail: item.bookThumbnail,
-                            unitPrice: item.unitPrice,
-                            quantity: item.quantity,
-                            saleOff:
-                                0.0, // Có thể tính từ unitPrice và totalPrice nếu cần
-                          );
-                        }).toList();
-
-                    // Điều hướng đến màn buy_now với dữ liệu
-                    Navigator.pushNamed(
-                      context,
-                      '/buy-now',
-                      arguments: {'items': checkoutItems},
-                    );
+                    await _handleBuyAgain();
                   }
                 },
                 style: ElevatedButton.styleFrom(

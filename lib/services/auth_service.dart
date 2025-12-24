@@ -563,7 +563,7 @@ class AuthService {
   Future<Map<String, dynamic>> forgotPassword(String email) async {
     try {
       final response = await apiClient.publicDio.post(
-        '/auth/resend-code',
+        '/auth/retry-password',
         queryParameters: {"email": email},
       );
 
@@ -579,9 +579,13 @@ class AuthService {
           'Failed to load promotions (status: ${response.statusCode})',
         );
       }
+    } on DioException catch (e) {
+      final message = e.response?.data['message'] ?? e.message;
+      debugPrint('❌ DioException: $message');
+      throw Exception('$message');
     } catch (e) {
-      debugPrint('💥 Error in forgotPassword: $e');
-      throw Exception('Error loading forgotPassword: $e');
+      debugPrint('❌ Lỗi không xác định khi quên mật khẩu: $e');
+      throw Exception('💥 Lỗi không xác định khi quên mật khẩu: $e');
     }
   }
 
