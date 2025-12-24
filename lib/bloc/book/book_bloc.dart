@@ -19,8 +19,14 @@ class BookBloc extends Bloc<BookEvent, BookState> {
   Future<void> _onLoadBooks(LoadBooks event, Emitter<BookState> emit) async {
     emit(BookLoading());
     try {
-      final bestSellingBooks = await bookService.getBestSellingBooksInYear();
-      final allBooks = await bookService.getAllBooks();
+      final bestSellingBooks =
+          (await bookService.getBestSellingBooksInYear())
+              .where((book) => book.isActive)
+              .toList();
+      final allBooks =
+          (await bookService.getAllBooks())
+              .where((book) => book.isActive)
+              .toList();
       final popularBooks =
           allBooks.where((book) => book.categories != null).toList();
       final saleOffBooks =
@@ -49,7 +55,10 @@ class BookBloc extends Bloc<BookEvent, BookState> {
   ) async {
     emit(BookLoading());
     try {
-      final searchResults = await bookService.searchBooks(event.query);
+      final searchResults =
+          (await bookService.searchBooks(
+            event.query,
+          )).where((book) => book.isActive).toList();
       emit(BookSearchLoaded(searchResults));
     } catch (e) {
       emit(BookError(e.toString()));
@@ -62,9 +71,10 @@ class BookBloc extends Bloc<BookEvent, BookState> {
   ) async {
     emit(BookLoading());
     try {
-      final categoryBooks = await bookService.getBooksByProductType(
-        event.productTypeName,
-      );
+      final categoryBooks =
+          (await bookService.getBooksByProductType(
+            event.productTypeName,
+          )).where((book) => book.isActive).toList();
       emit(BookCategoryLoaded(categoryBooks));
     } catch (e) {
       emit(BookError(e.toString()));
@@ -77,9 +87,10 @@ class BookBloc extends Bloc<BookEvent, BookState> {
   ) async {
     emit(BookLoading());
     try {
-      final categoryBooks = await bookService.getBooksByCategory(
-        event.categoryName,
-      );
+      final categoryBooks =
+          (await bookService.getBooksByCategory(
+            event.categoryName,
+          )).where((book) => book.isActive).toList();
       emit(BookCategoryLoaded(categoryBooks));
     } catch (e) {
       emit(BookError(e.toString()));
@@ -92,7 +103,10 @@ class BookBloc extends Bloc<BookEvent, BookState> {
   ) async {
     emit(BookLoading());
     try {
-      final allBooks = await bookService.getAllBooks();
+      final allBooks =
+          (await bookService.getAllBooks())
+              .where((book) => book.isActive)
+              .toList();
       emit(BookLoadAll(allBooks));
     } catch (e) {
       emit(BookError(e.toString()));
@@ -110,13 +124,15 @@ class BookBloc extends Bloc<BookEvent, BookState> {
 
       // Nếu có category thì mới load sách liên quan
       if (bookDetail.categories != null) {
-        relatedBooks = await bookService.getBooksByCategory(
-          bookDetail.categories!.name,
-        );
+        relatedBooks =
+            (await bookService.getBooksByCategory(
+              bookDetail.categories!.name,
+            )).where((book) => book.isActive).toList();
       } else {
-        relatedBooks = await bookService.getBooksByProductType(
-          bookDetail.productTypes!.name,
-        );
+        relatedBooks =
+            (await bookService.getBooksByProductType(
+              bookDetail.productTypes!.name,
+            )).where((book) => book.isActive).toList();
       }
       emit(BookDetailLoaded(book: bookDetail, relatedBooks: relatedBooks));
     } catch (e) {

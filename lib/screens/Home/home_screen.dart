@@ -4,7 +4,9 @@ import 'package:heaven_book_app/bloc/book/book_bloc.dart';
 import 'package:heaven_book_app/bloc/book/book_state.dart';
 import 'package:heaven_book_app/bloc/cart/cart_bloc.dart';
 import 'package:heaven_book_app/bloc/cart/cart_event.dart';
+import 'package:heaven_book_app/bloc/cart/cart_state.dart';
 import 'package:heaven_book_app/bloc/category/category_bloc.dart';
+import 'package:heaven_book_app/model/cart_item.dart';
 import 'package:heaven_book_app/bloc/category/category_event.dart';
 import 'package:heaven_book_app/bloc/product_type/product_type_bloc.dart';
 import 'package:heaven_book_app/bloc/product_type/product_type_state.dart';
@@ -1575,6 +1577,101 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             GestureDetector(
                               onTap: () {
+                                // Kiểm tra số lượng trong giỏ hàng
+                                final cartState =
+                                    context.read<CartBloc>().state;
+                                int quantityInCart = 0;
+
+                                if (cartState is CartLoaded) {
+                                  final existingItem = cartState.cart.items
+                                      .firstWhere(
+                                        (item) => item.bookId == book.id,
+                                        orElse:
+                                            () => CartItem(
+                                              id: 0,
+                                              bookId: 0,
+                                              categoryId: 0,
+                                              bookName: '',
+                                              bookAuthor: '',
+                                              bookThumbnail: '',
+                                              unitPrice: 0,
+                                              totalPrice: 0,
+                                              quantity: 0,
+                                              inStock: 0,
+                                              sale: 0,
+                                              isSelected: false,
+                                            ),
+                                      );
+                                  quantityInCart = existingItem.quantity;
+                                }
+
+                                // Kiểm tra xem có thể thêm không
+                                final totalQuantity = quantityInCart + 1;
+                                if (totalQuantity > book.quantity) {
+                                  // Hiển thị thông báo lỗi
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                        title: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.inventory_2_outlined,
+                                              color: AppColors.discountRed,
+                                              size: 28,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            const Expanded(
+                                              child: Text(
+                                                'Vượt quá tồn kho',
+                                                style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.text,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        content: Text(
+                                          quantityInCart > 0
+                                              ? 'Giỏ hàng đã có $quantityInCart sản phẩm này.\n\nKho chỉ còn ${book.quantity} sản phẩm, bạn chỉ có thể thêm tối đa ${book.quantity - quantityInCart} sản phẩm nữa.'
+                                              : 'Số lượng sản phẩm trong kho không đủ.\n\nKho chỉ còn ${book.quantity} sản phẩm.',
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            height: 1.5,
+                                            color: AppColors.text,
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed:
+                                                () => Navigator.pop(context),
+                                            style: TextButton.styleFrom(
+                                              foregroundColor:
+                                                  AppColors.primary,
+                                            ),
+                                            child: const Text(
+                                              'Đã hiểu',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                  return;
+                                }
+
+                                // Thêm vào giỏ hàng nếu hợp lệ
                                 context.read<CartBloc>().add(
                                   AddToCart(bookId: book.id, quantity: 1),
                                 );

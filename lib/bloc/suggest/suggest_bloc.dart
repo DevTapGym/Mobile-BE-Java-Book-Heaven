@@ -24,11 +24,19 @@ class SuggestBloc extends Bloc<SuggestEvent, SuggestState> {
         customerId: AppSession().currentUser!.customer!.id,
         position: event.position,
       );
-      emit(SuggestLoaded(suggestions: suggestions));
+      emit(
+        SuggestLoaded(
+          suggestions: suggestions.where((book) => book.isActive).take(5).toList(),
+        ),
+      );
     } catch (e) {
       emit(SuggestError(e.toString()));
       final allBooks = await bookService.getAllBooks();
-      emit(SuggestLoaded(suggestions: allBooks));
+      emit(
+        SuggestLoaded(
+          suggestions: allBooks.where((book) => book.isActive).toList(),
+        ),
+      );
     }
   }
 

@@ -4,9 +4,11 @@ import 'package:heaven_book_app/bloc/book/book_event.dart';
 import 'package:heaven_book_app/bloc/book/book_state.dart';
 import 'package:heaven_book_app/bloc/cart/cart_bloc.dart';
 import 'package:heaven_book_app/bloc/cart/cart_event.dart';
+import 'package:heaven_book_app/bloc/cart/cart_state.dart';
 import 'package:heaven_book_app/bloc/suggest/suggest_bloc.dart';
 import 'package:heaven_book_app/bloc/suggest/suggest_event.dart';
 import 'package:heaven_book_app/interceptors/app_session.dart';
+import 'package:heaven_book_app/model/cart_item.dart';
 import 'package:heaven_book_app/model/checkout.dart';
 import 'package:heaven_book_app/themes/format_price.dart';
 import 'package:heaven_book_app/widgets/book_section_widget.dart';
@@ -717,89 +719,102 @@ class _DetailScreenState extends State<DetailScreen>
   }
 
   Widget _buildActionButtons() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          // Quantity selector
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed:
-                      quantity > 1
-                          ? () {
-                            setState(() {
-                              quantity--;
-                            });
-                          }
-                          : null,
-                  icon: const Icon(Icons.remove),
-                  iconSize: 18,
-                ),
-                Container(
-                  width: 32,
-                  alignment: Alignment.center,
-                  child: Text(
-                    quantity.toString(),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      quantity++;
-                    });
-                  },
-                  icon: const Icon(Icons.add),
-                  iconSize: 18,
-                ),
-              ],
-            ),
-          ),
+    return BlocBuilder<BookBloc, BookState>(
+      builder: (context, state) {
+        if (state is! BookDetailLoaded) {
+          return const SizedBox.shrink();
+        }
 
-          const SizedBox(width: 16),
+        final book = state.book;
 
-          // Add to wishlist button
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () {
-                setState(() {
-                  isFavorite = !isFavorite;
-                });
-              },
-              icon: Icon(
-                isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: isFavorite ? Colors.red : AppColors.primary,
-              ),
-              label: Text(
-                //'Wishlist',
-                'Yêu thích',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.primary),
-                shape: RoundedRectangleBorder(
+        return Container(
+          color: Colors.white,
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              // Quantity selector
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed:
+                          quantity > 1
+                              ? () {
+                                setState(() {
+                                  quantity--;
+                                });
+                              }
+                              : null,
+                      icon: const Icon(Icons.remove),
+                      iconSize: 18,
+                    ),
+                    Container(
+                      width: 32,
+                      alignment: Alignment.center,
+                      child: Text(
+                        quantity.toString(),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed:
+                          quantity < book.quantity
+                              ? () {
+                                setState(() {
+                                  quantity++;
+                                });
+                              }
+                              : null,
+                      icon: const Icon(Icons.add),
+                      iconSize: 18,
+                    ),
+                  ],
+                ),
               ),
-            ),
+
+              const SizedBox(width: 16),
+
+              // Add to wishlist button
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      isFavorite = !isFavorite;
+                    });
+                  },
+                  icon: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: isFavorite ? Colors.red : AppColors.primary,
+                  ),
+                  label: Text(
+                    //'Wishlist',
+                    'Yêu thích',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1012,9 +1027,98 @@ class _DetailScreenState extends State<DetailScreen>
                       flex: 2,
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          final state = context.read<BookBloc>().state;
-                          if (state is BookDetailLoaded) {
-                            final book = state.book;
+                          final bookState = context.read<BookBloc>().state;
+                          final cartState = context.read<CartBloc>().state;
+
+                          if (bookState is BookDetailLoaded) {
+                            final book = bookState.book;
+
+                            // Kiểm tra số lượng đã có trong giỏ
+                            int quantityInCart = 0;
+                            if (cartState is CartLoaded) {
+                              final existingItem = cartState.cart.items
+                                  .firstWhere(
+                                    (item) => item.bookId == book.id,
+                                    orElse:
+                                        () => CartItem(
+                                          id: 0,
+                                          bookId: 0,
+                                          categoryId: 0,
+                                          bookName: '',
+                                          bookAuthor: '',
+                                          bookThumbnail: '',
+                                          unitPrice: 0,
+                                          totalPrice: 0,
+                                          quantity: 0,
+                                          inStock: 0,
+                                          sale: 0,
+                                          isSelected: false,
+                                        ),
+                                  );
+                              quantityInCart = existingItem.quantity;
+                            }
+
+                            // Kiểm tra tổng số lượng có vượt quá không
+                            final totalQuantity = quantityInCart + quantity;
+                            if (totalQuantity > book.quantity) {
+                              // Hiển thị thông báo lỗi
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    title: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.inventory_2_outlined,
+                                          color: AppColors.discountRed,
+                                          size: 28,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Expanded(
+                                          child: Text(
+                                            'Vượt quá tồn kho',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.text,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    content: Text(
+                                      quantityInCart > 0
+                                          ? 'Giỏ hàng đã có $quantityInCart sản phẩm này.\n\nShop chỉ còn ${book.quantity} sản phẩm này thoi, bạn không thể thêm vào giỏ hàng nữa.'
+                                          : 'Số lượng sản phẩm trong kho không đủ.\n\nKho chỉ còn ${book.quantity} sản phẩm, vui lòng giảm số lượng.',
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        height: 1.5,
+                                        color: AppColors.text,
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: AppColors.primary,
+                                        ),
+                                        child: const Text(
+                                          'Đã hiểu',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                              return;
+                            }
 
                             if (from == 'cart' || from == 'home') {
                               context.read<SuggestBloc>().add(
@@ -1137,31 +1241,31 @@ class _DetailScreenState extends State<DetailScreen>
                           borderRadius: BorderRadius.circular(14),
                           gradient: LinearGradient(
                             colors: [
-                              Colors.red.withValues(alpha: 0.1),
-                              Colors.red.withValues(alpha: 0.05),
+                              AppColors.discountRed.withValues(alpha: 0.1),
+                              AppColors.discountRed.withValues(alpha: 0.05),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           border: Border.all(
-                            color: Colors.red.withValues(alpha: 0.3),
+                            color: AppColors.discountRed.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.error_outline,
-                              color: Colors.red.shade700,
+                              color: AppColors.discountRed,
                               size: 24,
                             ),
                             const SizedBox(width: 8),
-                            Flexible(
+                            const Flexible(
                               child: Text(
                                 'Hết hàng rồi - quay lại sau nhé!',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Colors.red.shade700,
+                                  color: AppColors.discountRed,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 16,
                                 ),
